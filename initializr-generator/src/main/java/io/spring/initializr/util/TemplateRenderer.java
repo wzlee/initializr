@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,9 +69,9 @@ public class TemplateRenderer {
 			Template template = getTemplate(name);
 			return template.execute(model);
 		}
-		catch (Exception e) {
-			log.error("Cannot render: " + name, e);
-			throw new IllegalStateException("Cannot render template", e);
+		catch (Exception ex) {
+			log.error("Cannot render: " + name, ex);
+			throw new IllegalStateException("Cannot render template", ex);
 		}
 	}
 
@@ -88,8 +88,8 @@ public class TemplateRenderer {
 			template = this.mustache.loader.getTemplate(name);
 			return this.mustache.compile(template);
 		}
-		catch (Exception e) {
-			throw new IllegalStateException("Cannot load template " + name, e);
+		catch (Exception ex) {
+			throw new IllegalStateException("Cannot load template " + name, ex);
 		}
 	}
 

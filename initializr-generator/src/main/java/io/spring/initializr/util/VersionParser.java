@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class VersionParser {
 			}
 		}
 		if ("x".equals(minor) || "x".equals(patch)) {
-			Integer minorInt = "x".equals(minor) ? null : Integer.parseInt(minor);
+			Integer minorInt = ("x".equals(minor) ? null : Integer.parseInt(minor));
 			Version latest = findLatestVersion(major, minorInt, qualifier);
 			if (latest == null) {
 				return new Version(major,
@@ -159,7 +159,7 @@ public class VersionParser {
 			}
 			return true;
 		}).collect(Collectors.toList());
-		return (matches.size() == 1 ? matches.get(0) : null);
+		return (matches.size() != 1) ? null : matches.get(0);
 	}
 
 }

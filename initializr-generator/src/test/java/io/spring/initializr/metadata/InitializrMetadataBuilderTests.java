@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.boot.context.properties.bind.Binder;
@@ -36,10 +36,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Stephane Nicoll
  */
-public class InitializrMetadataBuilderTests {
+class InitializrMetadataBuilderTests {
 
 	@Test
-	public void loadDefaultConfig() {
+	void loadDefaultConfig() {
 		InitializrProperties bean = load(
 				new ClassPathResource("application-test-default.yml"));
 		InitializrMetadata metadata = InitializrMetadataBuilder
@@ -48,7 +48,7 @@ public class InitializrMetadataBuilderTests {
 	}
 
 	@Test
-	public void mergeIdenticalConfig() {
+	void mergeIdenticalConfig() {
 		InitializrProperties bean = load(
 				new ClassPathResource("application-test-default.yml"));
 		InitializrMetadata metadata = InitializrMetadataBuilder
@@ -58,7 +58,7 @@ public class InitializrMetadataBuilderTests {
 	}
 
 	@Test
-	public void mergeConfig() {
+	void mergeConfig() {
 		InitializrProperties config = load(
 				new ClassPathResource("application-test-default.yml"));
 		InitializrProperties customDefaultsConfig = load(
@@ -76,12 +76,12 @@ public class InitializrMetadataBuilderTests {
 	}
 
 	@Test
-	public void mergeMetadata() {
+	void mergeMetadata() {
 		InitializrMetadata metadata = InitializrMetadataBuilder.create()
 				.withInitializrMetadata(
 						new ClassPathResource("metadata/config/test-min.json"))
 				.build();
-		assertThat(metadata.getConfiguration().getEnv().isForceSsl()).isEqualTo(false);
+		assertThat(metadata.getConfiguration().getEnv().isForceSsl()).isEqualTo(true);
 		assertThat(metadata.getDependencies().getContent()).hasSize(1);
 		Dependency dependency = metadata.getDependencies().get("test");
 		assertThat(dependency).isNotNull();
@@ -101,7 +101,7 @@ public class InitializrMetadataBuilderTests {
 	}
 
 	@Test
-	public void mergeMetadataWithBom() {
+	void mergeMetadataWithBom() {
 		InitializrMetadata metadata = InitializrMetadataBuilder.create()
 				.withInitializrMetadata(
 						new ClassPathResource("metadata/config/test-bom.json"))
@@ -114,7 +114,7 @@ public class InitializrMetadataBuilderTests {
 		assertThat(myBom).isNotNull();
 		assertThat(myBom.getGroupId()).isEqualTo("org.acme");
 		assertThat(myBom.getArtifactId()).isEqualTo("my-bom");
-		assertThat(myBom.getVersion()).isEqualTo("1.2.3.RELEASE");
+		assertThat(myBom.getVersion()).isEqualTo("2.1.1.RELEASE");
 
 		BillOfMaterials anotherBom = boms.get("another-bom");
 		assertThat(anotherBom).isNotNull();
@@ -124,7 +124,7 @@ public class InitializrMetadataBuilderTests {
 	}
 
 	@Test
-	public void mergeMetadataWithRepository() throws Exception {
+	void mergeMetadataWithRepository() throws Exception {
 		InitializrMetadata metadata = InitializrMetadataBuilder.create()
 				.withInitializrMetadata(
 						new ClassPathResource("metadata/config/test-repository.json"))
@@ -147,7 +147,7 @@ public class InitializrMetadataBuilderTests {
 	}
 
 	@Test
-	public void mergeConfigurationDisabledByDefault() {
+	void mergeConfigurationDisabledByDefault() {
 		InitializrProperties config = load(
 				new ClassPathResource("application-test-default.yml"));
 		InitializrProperties customDefaultsConfig = load(
@@ -167,7 +167,7 @@ public class InitializrMetadataBuilderTests {
 	}
 
 	@Test
-	public void mergeConfiguration() {
+	void mergeConfiguration() {
 		InitializrProperties config = load(
 				new ClassPathResource("application-test-default.yml"));
 		InitializrProperties customDefaultsConfig = load(
@@ -188,7 +188,20 @@ public class InitializrMetadataBuilderTests {
 	}
 
 	@Test
-	public void addDependencyInCustomizer() {
+	void mergeSslConfiguration() {
+		InitializrProperties config = load(
+				new ClassPathResource("application-test-default.yml"));
+		InitializrProperties forceSslConfig = load(
+				new ClassPathResource("application-test-ssl.yml"));
+		InitializrMetadata metadata = InitializrMetadataBuilder
+				.fromInitializrProperties(config)
+				.withInitializrProperties(forceSslConfig, true).build();
+		InitializrConfiguration.Env actualEnv = metadata.getConfiguration().getEnv();
+		assertThat(actualEnv.isForceSsl()).isEqualTo(true);
+	}
+
+	@Test
+	void addDependencyInCustomizer() {
 		DependencyGroup group = DependencyGroup.create("Extra");
 		Dependency dependency = Dependency.withId("com.foo:foo:1.0.0");
 		group.getContent().add(dependency);
@@ -201,7 +214,7 @@ public class InitializrMetadataBuilderTests {
 
 	private static void assertDefaultConfig(InitializrMetadata metadata) {
 		assertThat(metadata).isNotNull();
-		assertThat(metadata.getDependencies().getAll()).hasSize(9);
+		assertThat(metadata.getDependencies().getAll()).hasSize(8);
 		assertThat(metadata.getDependencies().getContent()).hasSize(2);
 		assertThat(metadata.getTypes().getContent()).hasSize(4);
 	}

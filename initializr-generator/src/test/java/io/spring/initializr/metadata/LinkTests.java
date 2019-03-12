@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,39 +21,36 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link Link}.
  *
  * @author Stephane Nicoll
  */
-public class LinkTests {
-
-	@Rule
-	public final ExpectedException thrown = ExpectedException.none();
+class LinkTests {
 
 	@Test
-	public void resolveInvalidLinkNoRel() {
+	void resolveInvalidLinkNoRel() {
 		Link link = new Link();
 		link.setHref("https://example.com");
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		link.resolve();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(link::resolve);
 	}
 
 	@Test
-	public void resolveInvalidLinkNoHref() {
+	void resolveInvalidLinkNoHref() {
 		Link link = Link.create("reference", null, "foo doc");
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		link.resolve();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(link::resolve);
 	}
 
 	@Test
-	public void resolveLinkNoVariables() {
+	void resolveLinkNoVariables() {
 		Link link = Link.create("reference", "https://example.com/2");
 		link.resolve();
 		assertThat(link.isTemplated()).isFalse();
@@ -61,7 +58,7 @@ public class LinkTests {
 	}
 
 	@Test
-	public void resolveLinkWithVariables() {
+	void resolveLinkWithVariables() {
 		Link link = Link.create("reference", "https://example.com/{a}/2/{b}");
 		link.resolve();
 		assertThat(link.isTemplated()).isTrue();
@@ -69,7 +66,7 @@ public class LinkTests {
 	}
 
 	@Test
-	public void expandLink() throws Exception {
+	void expandLink() throws Exception {
 		Link link = Link.create("reference", "https://example.com/{a}/2/{b}");
 		link.resolve();
 		Map<String, String> map = new LinkedHashMap<>();
@@ -80,7 +77,7 @@ public class LinkTests {
 	}
 
 	@Test
-	public void expandLinkWithSameAttributeAtTwoPlaces() throws Exception {
+	void expandLinkWithSameAttributeAtTwoPlaces() throws Exception {
 		Link link = Link.create("reference", "https://example.com/{a}/2/{a}");
 		link.resolve();
 		Map<String, String> map = new LinkedHashMap<>();
@@ -91,13 +88,12 @@ public class LinkTests {
 	}
 
 	@Test
-	public void expandLinkMissingVariable() {
+	void expandLinkMissingVariable() {
 		Link link = Link.create("reference", "https://example.com/{a}/2/{b}");
 		link.resolve();
-
-		this.thrown.expect(IllegalArgumentException.class);
-		this.thrown.expectMessage("missing value for 'b'");
-		link.expand(Collections.singletonMap("a", "test"));
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> link.expand(Collections.singletonMap("a", "test")))
+				.withMessageContaining("missing value for 'b'");
 	}
 
 }

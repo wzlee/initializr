@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,8 @@ import java.util.Map;
 
 import io.spring.initializr.metadata.InitializrMetadata;
 import io.spring.initializr.test.metadata.InitializrMetadataTestBuilder;
-import io.spring.initializr.util.VersionProperty;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.BeanWrapperImpl;
 
@@ -37,10 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Stephane Nicoll
  */
-public class ProjectRequestResolverTests {
-
-	private static final VersionProperty VERSION_PROPERTY = new VersionProperty(
-			"java.version");
+class ProjectRequestResolverTests {
 
 	private InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 			.addDependencyGroup("test", "web", "security", "data-jpa").build();
@@ -49,23 +45,23 @@ public class ProjectRequestResolverTests {
 
 	final GenericProjectRequestPostProcessor processor = new GenericProjectRequestPostProcessor();
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		this.postProcessors.add(this.processor);
 	}
 
 	@Test
-	public void beforeResolution() {
+	void beforeResolution() {
 		this.processor.before.put("javaVersion", "1.2");
 		ProjectRequest request = resolve(createMavenProjectRequest(),
 				this.postProcessors);
 		assertThat(request.getJavaVersion()).isEqualTo("1.2");
-		assertThat(request.getBuildProperties().getVersions().get(VERSION_PROPERTY).get())
+		assertThat(request.getBuildProperties().getMaven().get("java.version").get())
 				.isEqualTo("1.2");
 	}
 
 	@Test
-	public void afterResolution() {
+	void afterResolution() {
 		this.postProcessors.add(new ProjectRequestPostProcessor() {
 			@Override
 			public void postProcessAfterResolution(ProjectRequest request,

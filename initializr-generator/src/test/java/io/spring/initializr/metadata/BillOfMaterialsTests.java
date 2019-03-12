@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,22 +21,18 @@ import java.util.Arrays;
 import io.spring.initializr.metadata.BillOfMaterials.Mapping;
 import io.spring.initializr.util.Version;
 import io.spring.initializr.util.VersionParser;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 /**
  * @author Stephane Nicoll
  */
-public class BillOfMaterialsTests {
-
-	@Rule
-	public final ExpectedException thrown = ExpectedException.none();
+class BillOfMaterialsTests {
 
 	@Test
-	public void resolveSimpleBom() {
+	void resolveSimpleBom() {
 		BillOfMaterials bom = BillOfMaterials.create("com.example", "bom", "1.0.0");
 		bom.validate();
 		BillOfMaterials resolved = bom.resolve(Version.parse("1.2.3.RELEASE"));
@@ -44,7 +40,7 @@ public class BillOfMaterialsTests {
 	}
 
 	@Test
-	public void resolveSimpleRange() {
+	void resolveSimpleRange() {
 		BillOfMaterials bom = BillOfMaterials.create("com.example", "bom", "1.0.0");
 		bom.setVersionProperty("bom.version");
 		bom.getRepositories().add("repo-main");
@@ -64,7 +60,30 @@ public class BillOfMaterialsTests {
 	}
 
 	@Test
-	public void resolveRangeOverride() {
+	void resolveSimpleRangeWithGroupIdArtifactId() {
+		BillOfMaterials bom = BillOfMaterials.create("com.example", "bom", "1.0.0");
+		bom.setVersionProperty("bom.version");
+		bom.getRepositories().add("repo-main");
+		bom.getAdditionalBoms().add("bom-main");
+		Mapping mapping = Mapping.create("[1.2.0.RELEASE,1.3.0.M1)", "1.1.0");
+		mapping.setGroupId("com.example.override");
+		mapping.setArtifactId("bom-override");
+		bom.getMappings().add(mapping);
+		bom.validate();
+		BillOfMaterials resolved = bom.resolve(Version.parse("1.2.3.RELEASE"));
+		assertThat(resolved.getGroupId()).isEqualTo("com.example.override");
+		assertThat(resolved.getArtifactId()).isEqualTo("bom-override");
+		assertThat(resolved.getVersion()).isEqualTo("1.1.0");
+		assertThat(resolved.getVersionProperty().toStandardFormat())
+				.isEqualTo("bom.version");
+		assertThat(resolved.getRepositories()).hasSize(1);
+		assertThat(resolved.getRepositories().get(0)).isEqualTo("repo-main");
+		assertThat(resolved.getAdditionalBoms()).hasSize(1);
+		assertThat(resolved.getAdditionalBoms().get(0)).isEqualTo("bom-main");
+	}
+
+	@Test
+	void resolveRangeOverride() {
 		BillOfMaterials bom = BillOfMaterials.create("com.example", "bom", "1.0.0");
 		bom.getRepositories().add("repo-main");
 		bom.getAdditionalBoms().add("bom-main");
@@ -84,7 +103,7 @@ public class BillOfMaterialsTests {
 	}
 
 	@Test
-	public void resolveRangeOverrideAndMapping() {
+	void resolveRangeOverrideAndMapping() {
 		BillOfMaterials bom = BillOfMaterials.create("com.example", "bom", "1.0.0");
 		bom.setVersionProperty("example.version");
 		bom.getMappings().add(Mapping.create("[1.2.0.RELEASE,1.3.0.M1)", "1.1.0"));
@@ -98,19 +117,18 @@ public class BillOfMaterialsTests {
 	}
 
 	@Test
-	public void noRangeAvailable() {
+	void noRangeAvailable() {
 		BillOfMaterials bom = BillOfMaterials.create("com.example", "bom");
 		bom.getMappings().add(Mapping.create("[1.2.0.RELEASE,1.3.0.M1)", "1.1.0"));
 		bom.getMappings().add(Mapping.create("[1.3.0.M1, 1.4.0.M1)", "1.2.0"));
 		bom.validate();
-
-		this.thrown.expect(IllegalStateException.class);
-		this.thrown.expectMessage("1.4.1.RELEASE");
-		bom.resolve(Version.parse("1.4.1.RELEASE"));
+		assertThatIllegalStateException()
+				.isThrownBy(() -> bom.resolve(Version.parse("1.4.1.RELEASE")))
+				.withMessageContaining("1.4.1.RELEASE");
 	}
 
 	@Test
-	public void resolveRangeWithVariablePatch() {
+	void resolveRangeWithVariablePatch() {
 		BillOfMaterials bom = BillOfMaterials.create("com.example", "bom", "1.0.0");
 		bom.getMappings().add(Mapping.create("[1.3.0.RELEASE,1.3.x.RELEASE]", "1.1.0"));
 		bom.getMappings().add(BillOfMaterials.Mapping

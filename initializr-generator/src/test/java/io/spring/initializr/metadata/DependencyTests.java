@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,21 @@ import java.util.Arrays;
 
 import io.spring.initializr.util.Version;
 import io.spring.initializr.util.VersionParser;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link Dependency}.
  *
  * @author Stephane Nicoll
  */
-public class DependencyTests {
-
-	@Rule
-	public final ExpectedException thrown = ExpectedException.none();
+class DependencyTests {
 
 	@Test
-	public void createRootSpringBootStarter() {
+	void createRootSpringBootStarter() {
 		Dependency d = new Dependency();
 		d.asSpringBootStarter("");
 		assertThat(d.getGroupId()).isEqualTo("org.springframework.boot");
@@ -45,7 +42,7 @@ public class DependencyTests {
 	}
 
 	@Test
-	public void setCoordinatesFromId() {
+	void setCoordinatesFromId() {
 		Dependency dependency = Dependency.withId("org.foo:bar:1.2.3");
 		dependency.resolve();
 		assertThat(dependency.getGroupId()).isEqualTo("org.foo");
@@ -55,7 +52,7 @@ public class DependencyTests {
 	}
 
 	@Test
-	public void setCoordinatesFromIdNoVersion() {
+	void setCoordinatesFromIdNoVersion() {
 		Dependency dependency = Dependency.withId("org.foo:bar");
 		dependency.resolve();
 		assertThat(dependency.getGroupId()).isEqualTo("org.foo");
@@ -65,7 +62,7 @@ public class DependencyTests {
 	}
 
 	@Test
-	public void setIdFromCoordinates() {
+	void setIdFromCoordinates() {
 		Dependency dependency = new Dependency();
 		dependency.setGroupId("org.foo");
 		dependency.setArtifactId("bar");
@@ -75,7 +72,7 @@ public class DependencyTests {
 	}
 
 	@Test
-	public void setIdFromCoordinatesNoVersion() {
+	void setIdFromCoordinatesNoVersion() {
 		Dependency dependency = new Dependency();
 		dependency.setGroupId("org.foo");
 		dependency.setArtifactId("bar");
@@ -84,7 +81,7 @@ public class DependencyTests {
 	}
 
 	@Test
-	public void setIdFromSimpleName() {
+	void setIdFromSimpleName() {
 		Dependency dependency = Dependency.withId("web");
 		dependency.resolve();
 		assertThat(dependency.getGroupId()).isEqualTo("org.springframework.boot");
@@ -94,64 +91,58 @@ public class DependencyTests {
 	}
 
 	@Test
-	public void invalidDependency() {
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		new Dependency().resolve();
+	void invalidDependency() {
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(() -> new Dependency().resolve());
 	}
 
 	@Test
-	public void invalidDependencyScope() {
+	void invalidDependencyScope() {
 		Dependency dependency = Dependency.withId("web");
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(() -> dependency.setScope("whatever"));
 
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		dependency.setScope("whatever");
 	}
 
 	@Test
-	public void invalidSpringBootRange() {
+	void invalidSpringBootRange() {
 		Dependency dependency = Dependency.withId("web");
 		dependency.setVersionRange("A.B.C");
-
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		this.thrown.expectMessage("A.B.C");
-		dependency.resolve();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(dependency::resolve).withMessageContaining("A.B.C");
 	}
 
 	@Test
-	public void invalidIdFormatTooManyColons() {
+	void invalidIdFormatTooManyColons() {
 		Dependency dependency = Dependency.withId("org.foo:bar:1.0:test:external");
-
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		dependency.resolve();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(dependency::resolve);
 	}
 
 	@Test
-	public void invalidLink() {
+	void invalidLink() {
 		Dependency dependency = Dependency.withId("foo");
 		dependency.getLinks().add(Link.create(null, "https://example.com"));
-
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		dependency.resolve();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(dependency::resolve);
 	}
 
 	@Test
-	public void generateIdWithNoGroupId() {
+	void generateIdWithNoGroupId() {
 		Dependency dependency = new Dependency();
 		dependency.setArtifactId("bar");
-		this.thrown.expect(IllegalArgumentException.class);
-		dependency.generateId();
+		assertThatIllegalArgumentException().isThrownBy(dependency::generateId);
 	}
 
 	@Test
-	public void generateIdWithNoArtifactId() {
+	void generateIdWithNoArtifactId() {
 		Dependency dependency = new Dependency();
 		dependency.setGroupId("foo");
-		this.thrown.expect(IllegalArgumentException.class);
-		dependency.generateId();
+		assertThatIllegalArgumentException().isThrownBy(dependency::generateId);
 	}
 
 	@Test
-	public void resolveNoMapping() {
+	void resolveNoMapping() {
 		Dependency dependency = Dependency.withId("web");
 		dependency.resolve();
 		assertThat(dependency.resolve(Version.parse("1.2.0.RELEASE")))
@@ -159,17 +150,16 @@ public class DependencyTests {
 	}
 
 	@Test
-	public void resolveInvalidMapping() {
+	void resolveInvalidMapping() {
 		Dependency dependency = Dependency.withId("web");
 		dependency.getMappings()
 				.add(Dependency.Mapping.create("foo-bar", null, null, "0.1.0.RELEASE"));
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		this.thrown.expectMessage("foo-bar");
-		dependency.resolve();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(dependency::resolve).withMessageContaining("foo-bar");
 	}
 
 	@Test
-	public void resolveVersionRequirement() {
+	void resolveVersionRequirement() {
 		Dependency dependency = Dependency.withId("web");
 		dependency.getMappings().add(Dependency.Mapping
 				.create("[1.1.0.RELEASE, 1.2.0.RELEASE)", null, null, "0.1.0.RELEASE"));
@@ -180,7 +170,7 @@ public class DependencyTests {
 	}
 
 	@Test
-	public void resolveMatchingVersionMapping() {
+	void resolveMatchingVersionMapping() {
 		Dependency dependency = Dependency.withId("web", null, null, "0.3.0.RELEASE");
 		dependency.setDescription("A web dependency");
 		dependency.getKeywords().addAll(Arrays.asList("foo", "bar"));
@@ -201,7 +191,7 @@ public class DependencyTests {
 	}
 
 	@Test
-	public void resolveMatchArtifactMapping() {
+	void resolveMatchArtifactMapping() {
 		Dependency dependency = Dependency.withId("web", null, null, "0.3.0.RELEASE");
 		dependency.setDescription("A web dependency");
 		dependency.getKeywords().addAll(Arrays.asList("foo", "bar"));
@@ -222,7 +212,7 @@ public class DependencyTests {
 	}
 
 	@Test
-	public void resolveMatchingVersionWithVariablePatch() {
+	void resolveMatchingVersionWithVariablePatch() {
 		Dependency dependency = Dependency.withId("web", null, null, "0.3.0.RELEASE");
 		dependency.setDescription("A web dependency");
 		dependency.getKeywords().addAll(Arrays.asList("foo", "bar"));
@@ -258,7 +248,7 @@ public class DependencyTests {
 	}
 
 	@Test
-	public void resolveMatchingWithCustomGroupId() {
+	void resolveMatchingWithCustomGroupId() {
 		Dependency dependency = Dependency.withId("foo", "com.acme", "foo",
 				"0.3.0.RELEASE");
 		dependency.getMappings().add(Dependency.Mapping
@@ -270,6 +260,25 @@ public class DependencyTests {
 				"foo", "com.acme", "foo", "1.0.0.RELEASE");
 		validateResolvedDependency(dependency.resolve(Version.parse("1.2.5.RELEASE")),
 				"foo", "com.acme", "bar", "0.3.0.RELEASE");
+	}
+
+	@Test
+	void resolveVersionWithX() {
+		Dependency dependency1 = Dependency.withId("foo1", "com.acme", "foo1",
+				"0.3.0.RELEASE");
+		dependency1.setVersionRange("1.2.x.RELEASE");
+		dependency1.resolve();
+		assertThat(dependency1.getVersionRange()).isEqualTo("1.2.999.RELEASE");
+	}
+
+	@Test
+	void resolveVersionRangeWithX() {
+		Dependency dependency = Dependency.withId("foo1", "com.acme", "foo1",
+				"0.3.0.RELEASE");
+		dependency.setVersionRange("[1.1.0.RELEASE, 1.2.x.RELEASE)");
+		dependency.resolve();
+		assertThat(dependency.getVersionRange())
+				.isEqualTo("[1.1.0.RELEASE,1.2.999.RELEASE)");
 	}
 
 	private static void validateResolvedWebDependency(Dependency dependency,

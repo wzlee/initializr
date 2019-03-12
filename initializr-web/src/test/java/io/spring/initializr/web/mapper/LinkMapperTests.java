@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.spring.initializr.metadata.Link;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,10 +31,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Stephane Nicoll
  */
-public class LinkMapperTests {
+class LinkMapperTests {
 
 	@Test
-	public void mapSimpleRel() {
+	void mapSimpleRel() {
 		List<Link> links = new ArrayList<>();
 		links.add(Link.create("a", "https://example.com", "some description"));
 		ObjectNode model = LinkMapper.mapLinks(links);
@@ -47,7 +47,7 @@ public class LinkMapperTests {
 	}
 
 	@Test
-	public void mapTemplatedRel() {
+	void mapTemplatedRel() {
 		List<Link> links = new ArrayList<>();
 		links.add(Link.create("a", "https://example.com/{bootVersion}/a", true));
 		ObjectNode model = LinkMapper.mapLinks(links);
@@ -61,7 +61,7 @@ public class LinkMapperTests {
 	}
 
 	@Test
-	public void mergeSeveralLinksInArray() {
+	void mergeSeveralLinksInArray() {
 		List<Link> links = new ArrayList<>();
 		links.add(Link.create("a", "https://example.com", "some description"));
 		links.add(Link.create("a", "https://example.com/2"));
@@ -77,7 +77,7 @@ public class LinkMapperTests {
 	}
 
 	@Test
-	public void keepOrdering() {
+	void keepOrdering() {
 		List<Link> links = new ArrayList<>();
 		links.add(Link.create("first", "https://example.com"));
 		links.add(Link.create("second", "https://example.com"));
@@ -87,7 +87,7 @@ public class LinkMapperTests {
 	}
 
 	@Test
-	public void keepOrderingWithMultipleUrlForSameRel() {
+	void keepOrderingWithMultipleUrlForSameRel() {
 		List<Link> links = new ArrayList<>();
 		links.add(Link.create("first", "https://example.com"));
 		links.add(Link.create("second", "https://example.com"));

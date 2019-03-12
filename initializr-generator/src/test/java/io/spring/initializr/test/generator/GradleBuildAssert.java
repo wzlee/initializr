@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class GradleBuildAssert {
 	}
 
 	public GradleBuildAssert hasJavaVersion(String javaVersion) {
-		return contains("sourceCompatibility = " + javaVersion);
+		return contains("sourceCompatibility = '" + javaVersion + "'");
 	}
 
 	public GradleBuildAssert hasSnapshotRepository() {
@@ -60,7 +60,26 @@ public class GradleBuildAssert {
 	}
 
 	public GradleBuildAssert hasRepository(String url) {
-		return contains("maven { url \"" + url + "\" }");
+		return contains("maven { url '" + url + "' }");
+	}
+
+	/**
+	 * Assert the build contains only the specified properties
+	 * @param values the property value pairs
+	 * @return this for method chaining.
+	 */
+	public GradleBuildAssert hasProperties(String... values) {
+		StringBuilder builder = new StringBuilder(String.format("ext {%n"));
+		if (values.length % 2 == 1) {
+			throw new IllegalArgumentException(
+					"Size must be even, it is a set of property=value pairs");
+		}
+		for (int i = 0; i < values.length; i += 2) {
+			builder.append(
+					String.format("\tset('%s', '%s')%n", values[i], values[i + 1]));
+		}
+		builder.append("}");
+		return contains(builder.toString());
 	}
 
 	public GradleBuildAssert contains(String expression) {

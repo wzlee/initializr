@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class InitializrMetadataV21JsonMapper extends InitializrMetadataV2JsonMap
 	}
 
 	private ObjectNode dependenciesLink(String appUrl) {
-		String uri = appUrl != null ? appUrl + "/dependencies" : "/dependencies";
+		String uri = (appUrl != null) ? appUrl + "/dependencies" : "/dependencies";
 		UriTemplate uriTemplate = new UriTemplate(uri, this.dependenciesVariables);
 		ObjectNode result = nodeFactory().objectNode();
 		result.put("href", uriTemplate.toString());

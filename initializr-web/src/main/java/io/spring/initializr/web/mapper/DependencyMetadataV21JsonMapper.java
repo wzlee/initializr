@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class DependencyMetadataV21JsonMapper implements DependencyMetadataJsonMa
 	private static JsonNode mapRepository(Repository repo) {
 		ObjectNode node = nodeFactory.objectNode();
 		node.put("name", repo.getName())
-				.put("url", (repo.getUrl() != null ? repo.getUrl().toString() : null))
+				.put("url", (repo.getUrl() != null) ? repo.getUrl().toString() : null)
 				.put("snapshotEnabled", repo.isSnapshotsEnabled());
 		return node;
 	}

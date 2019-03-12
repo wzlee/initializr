@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.spring.initializr.metadata.DefaultMetadataElement;
 import io.spring.initializr.metadata.InitializrMetadata;
 import io.spring.initializr.metadata.InitializrMetadataBuilder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
@@ -40,7 +40,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
  * @author Stephane Nicoll
  * @author Dave Syer
  */
-public class SpringBootMetadataReaderTests {
+class SpringBootMetadataReaderTests {
 
 	private final InitializrMetadata metadata = InitializrMetadataBuilder.create()
 			.build();
@@ -53,7 +53,7 @@ public class SpringBootMetadataReaderTests {
 			.bindTo(this.restTemplate).build();
 
 	@Test
-	public void readAvailableVersions() throws IOException {
+	void readAvailableVersions() throws IOException {
 		this.server.expect(requestTo("https://spring.io/project_metadata/spring-boot"))
 				.andRespond(withSuccess(
 						new ClassPathResource("metadata/sagan/spring-boot.json"),

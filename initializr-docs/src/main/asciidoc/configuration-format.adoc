@@ -5,10 +5,6 @@ The metadata provided through configuration are driving the options exposed by a
 particular instance and <<metadata-format.adoc#metadata-format,the project metadata
 format>>.
 
-TIP: A good way to get started with the configuration is to look at the
-{sc-initializr-service}/resources/application.yml[configuration of the production
-instance] and check the end-result on https://start.spring.io
-
 The configuration is split in several sections:
 
 * An `env` section used to provide various global settings.
@@ -33,8 +29,9 @@ download the Spring Boot CLI distribution bundle. This is only used by the `/spr
 endpoint at the moment.
 * `springBootMetadataUrl` the URL of the resource that provides the list of available
 Spring Boot versions..
-* `forceSsl`: a boolean flag that determines if we should use `https` even when
-browsing a resource via `http`. This is _enabled_ by default.
+* `forceSsl`: a boolean flag that determines if we should redirect browser to `https` when
+browsing via `http`. Also force the use of `https` in all links. This is not enabled by
+default to ease local use case but should be enabled in production.
 * `fallbackApplicationName`: the name of the _default_ application. Application names
 are generated based on the project's name. However, some user input may result in an
 invalid identifier for a Java class name for instance.
@@ -45,7 +42,7 @@ generation uses one of these names, the default is used instead.
 * `googleAnalyticsTrackingCode`: the Google Analytics code to use. If this is set,
 Google analytics is automatically enabled.
 * `kotlin`: kotlin-specific settings. For now, only the kotlin version to use can be
-configured.
+configured and is a mandatory option if Kotlin is enabled.
 * `maven`: maven-specified settings. A custom maven parent POM can be defined and
 whether or not the `spring-boot-dependencies` BOM should be automatically added to
 the project.
@@ -104,15 +101,16 @@ list of the available configuration options.
 
 Here is the most basic dependency entry you could have
 
-```yml
-initializr:
-  dependencies:
-    - name: Core
-      content:
-        - id: security
-          name: Security
-          description: Secure your application via spring-security
-```
+[source,yaml,indent=0]
+----
+	initializr:
+	  dependencies:
+	    - name: Core
+	      content:
+	        - id: security
+	          name: Security
+	          description: Secure your application via spring-security
+----
 
 TIP: The `security` dependency is held within a group called "Core".
 
@@ -125,20 +123,21 @@ Let's now add a custom dependency that is not managed by Spring Boot and that on
 work from Spring Boot `1.2.0.RELEASE` and onwards but should not be used in the 1.3
 lines and further for some reason.
 
-```yml
-initializr:
-  dependencies:
-    - name: Core
-      content:
-        - id: my-lib-id
-          name: My lib
-          description: Secure your application via spring-security
-          groupId: com.example.foo
-          artifactId: foo-core
-          bom: foo-bom
-          repository: foo-repo
-          versionRange: "[1.2.0.RELEASE,1.3.0.M1)"
-```
+[source,yaml,indent=0]
+----
+	initializr:
+	  dependencies:
+	    - name: Core
+	      content:
+	        - id: my-lib-id
+	          name: My lib
+	          description: Secure your application via spring-security
+	          groupId: com.example.foo
+	          artifactId: foo-core
+	          bom: foo-bom
+	          repository: foo-repo
+	          versionRange: "[1.2.0.RELEASE,1.3.0.M1)"
+----
 
 If one selects this entry, the `com.example.foo:foo-core}` dependency will be added
 and the Bill of Materials and repository for `foo` will be added automatically to
@@ -167,15 +166,16 @@ UI. This also drives how the meta-data for your instance are generated and tooli
 support is meant to react to that.
 
 For instance, if you want your groupId to default to `org.acme` and the
-`javaVersions` to only be `1.7` and `1.8` you would write the following config:
+`javaVersions` to only be `1.8` and `11` you would write the following config:
 
-```yml
-initializr:
-  groupId:
-    value: org.acme
-  javaVersions:
-    - id: 1.8
-      default: true
-    - id: 1.7
-      default: false
-```
+[source,yaml,indent=0]
+----
+	initializr:
+	  groupId:
+	    value: org.acme
+	  javaVersions:
+	    - id: 11
+	      default: false
+	    - id: 1.8
+	      default: true
+----

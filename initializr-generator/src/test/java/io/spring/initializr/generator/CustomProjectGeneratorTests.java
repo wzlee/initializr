@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.io.File;
 import java.util.Map;
 
 import io.spring.initializr.test.generator.ProjectAssert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
@@ -36,14 +36,14 @@ import static org.mockito.Mockito.times;
  * @author Torsten Walter
  * @author Stephane Nicoll
  */
-public class CustomProjectGeneratorTests extends AbstractProjectGeneratorTests {
+class CustomProjectGeneratorTests extends AbstractProjectGeneratorTests {
 
-	public CustomProjectGeneratorTests() {
+	CustomProjectGeneratorTests() {
 		super(new MyProjectGenerator());
 	}
 
 	@Test
-	public void generateCustomResource() {
+	void generateCustomResource() {
 		ProjectRequest request = createProjectRequest();
 		request.setType("maven-project");
 		request.setGroupId("com.example.custom");
@@ -53,7 +53,7 @@ public class CustomProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void generateCustomResourceDisabled() {
+	void generateCustomResourceDisabled() {
 		ProjectRequest request = createProjectRequest();
 		request.setType("gradle-build");
 		request.setGroupId("com.example.custom");
@@ -62,7 +62,7 @@ public class CustomProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void projectGenerationEventFiredAfterCustomization() {
+	void projectGenerationEventFiredAfterCustomization() {
 		ProjectRequest request = createProjectRequest();
 		request.setType("maven-project");
 		request.setGroupId("com.example.custom");

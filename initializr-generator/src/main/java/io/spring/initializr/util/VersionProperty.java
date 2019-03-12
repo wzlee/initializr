@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,48 @@ import org.springframework.util.StringUtils;
  *
  * @author Stephane Nicoll
  */
-public class VersionProperty implements Serializable, Comparable<VersionProperty> {
+public final class VersionProperty implements Serializable, Comparable<VersionProperty> {
+
+	private static final long serialVersionUID = 2579942080818066403L;
 
 	private static final List<Character> SUPPORTED_CHARS = Arrays.asList('.', '-');
 
 	private final String property;
 
-	public VersionProperty(String property) {
+	private final boolean internal;
+
+	private VersionProperty(String property, boolean internal) {
 		this.property = validateFormat(property);
+		this.internal = internal;
+	}
+
+	/**
+	 * Create a {@link VersionProperty}.
+	 * @param property the name of the property
+	 * @param internal whether the property is internal and can be tuned according to the
+	 * build system
+	 * @return a version property
+	 */
+	public static VersionProperty of(String property, boolean internal) {
+		return new VersionProperty(property, internal);
+	}
+
+	/**
+	 * Create an internal {@link VersionProperty}.
+	 * @param property the name of the property
+	 * @return a version property whose format can be tuned according to the build system
+	 */
+	public static VersionProperty of(String property) {
+		return of(property, true);
+	}
+
+	/**
+	 * Specify if the property is internally defined and can be tuned according to the
+	 * build system.
+	 * @return {@code true} if the property is defined within the scope of this project
+	 */
+	public boolean isInternal() {
+		return this.internal;
 	}
 
 	/**
@@ -83,11 +117,6 @@ public class VersionProperty implements Serializable, Comparable<VersionProperty
 	}
 
 	@Override
-	public String toString() {
-		return this.property;
-	}
-
-	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
 			return true;
@@ -104,6 +133,11 @@ public class VersionProperty implements Serializable, Comparable<VersionProperty
 	@Override
 	public int hashCode() {
 		return this.property.hashCode();
+	}
+
+	@Override
+	public String toString() {
+		return this.property;
 	}
 
 }

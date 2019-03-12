@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,11 @@ public class InitializrMetadataTestBuilder {
 	private final InitializrMetadataBuilder builder = InitializrMetadataBuilder.create();
 
 	public static InitializrMetadataTestBuilder withDefaults() {
-		return new InitializrMetadataTestBuilder().addDefaults();
+		return new InitializrMetadataTestBuilder().addAllDefaults();
+	}
+
+	public static InitializrMetadataTestBuilder withBasicDefaults() {
+		return new InitializrMetadataTestBuilder().addBasicDefaults();
 	}
 
 	public InitializrMetadata build() {
@@ -75,10 +79,13 @@ public class InitializrMetadataTestBuilder {
 		return this;
 	}
 
-	public InitializrMetadataTestBuilder addDefaults() {
+	public InitializrMetadataTestBuilder addAllDefaults() {
+		return addBasicDefaults().setGradleEnv("0.5.1.RELEASE").setKotlinEnv("1.1.1");
+	}
+
+	public InitializrMetadataTestBuilder addBasicDefaults() {
 		return addDefaultTypes().addDefaultPackagings().addDefaultJavaVersions()
-				.addDefaultLanguages().addDefaultBootVersions()
-				.setGradleEnv("0.5.1.RELEASE").setKotlinEnv("1.1.1");
+				.addDefaultLanguages().addDefaultBootVersions();
 	}
 
 	public InitializrMetadataTestBuilder addDefaultTypes() {
@@ -158,9 +165,10 @@ public class InitializrMetadataTestBuilder {
 	}
 
 	public InitializrMetadataTestBuilder addDefaultBootVersions() {
-		return addBootVersion("1.1.2.RELEASE", false)
-				.addBootVersion("1.2.3.RELEASE", true)
-				.addBootVersion("1.3.0.BUILD-SNAPSHOT", false);
+		return addBootVersion("1.5.17.RELEASE", false)
+				.addBootVersion("2.0.3.RELEASE", false)
+				.addBootVersion("2.1.1.RELEASE", true)
+				.addBootVersion("2.2.0.BUILD-SNAPSHOT", false);
 	}
 
 	public InitializrMetadataTestBuilder addBootVersion(String id, boolean defaultValue) {
@@ -225,8 +233,8 @@ public class InitializrMetadataTestBuilder {
 			try {
 				repo.setUrl(new URL(url));
 			}
-			catch (MalformedURLException e) {
-				throw new IllegalArgumentException("Cannot create URL", e);
+			catch (MalformedURLException ex) {
+				throw new IllegalArgumentException("Cannot create URL", ex);
 			}
 			repo.setSnapshotsEnabled(snapshotsEnabled);
 			it.getConfiguration().getEnv().getRepositories().put(id, repo);

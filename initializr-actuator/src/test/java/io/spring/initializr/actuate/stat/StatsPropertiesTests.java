@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,23 @@
 
 package io.spring.initializr.actuate.stat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
+ * Tests for {@link StatsProperties}.
+ *
  * @author Stephane Nicoll
  */
-public class StatsPropertiesTests {
+class StatsPropertiesTests {
 
 	private final StatsProperties properties = new StatsProperties();
 
 	@Test
-	public void cleanTrailingSlash() {
+	void cleanTrailingSlash() {
 		this.properties.getElastic().setUri("http://example.com/");
 		assertThat(this.properties.getElastic().getUri()).isEqualTo("http://example.com");
-	}
-
-	@Test
-	public void provideEntityUrl() {
-		this.properties.getElastic().setUri("http://example.com/");
-		this.properties.getElastic().setIndexName("my-index");
-		this.properties.getElastic().setEntityName("foo");
-		assertThat(this.properties.getElastic().getEntityUrl().toString())
-				.isEqualTo("http://example.com/my-index/foo");
 	}
 
 }

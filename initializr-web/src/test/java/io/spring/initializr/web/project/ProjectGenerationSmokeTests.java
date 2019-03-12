@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,16 @@ package io.spring.initializr.web.project;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import io.spring.initializr.test.generator.ProjectAssert;
 import io.spring.initializr.web.AbstractFullStackInitializrIntegrationTests;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junitpioneer.jupiter.TempDirectory;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
@@ -44,9 +47,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Dave Syer
  * @author Stephane Nicoll
  */
+@ExtendWith(TempDirectory.class)
 @ActiveProfiles("test-default")
-public class ProjectGenerationSmokeTests
-		extends AbstractFullStackInitializrIntegrationTests {
+class ProjectGenerationSmokeTests extends AbstractFullStackInitializrIntegrationTests {
 
 	private File downloadDir;
 
@@ -54,11 +57,11 @@ public class ProjectGenerationSmokeTests
 
 	private Action enterAction;
 
-	@Before
-	public void setup() throws IOException {
-		Assume.assumeTrue("Smoke tests disabled (set System property 'smoke.test')",
-				Boolean.getBoolean("smoke.test"));
-		this.downloadDir = this.folder.newFolder();
+	@BeforeEach
+	public void setup(@TempDirectory.TempDir Path folder) throws IOException {
+		Assumptions.assumeTrue(Boolean.getBoolean("smoke.test"),
+				"Smoke tests disabled (set System property 'smoke.test')");
+		this.downloadDir = folder.toFile();
 		FirefoxProfile fxProfile = new FirefoxProfile();
 		fxProfile.setPreference("browser.download.folderList", 2);
 		fxProfile.setPreference("browser.download.manager.showWhenStarting", false);
@@ -74,7 +77,7 @@ public class ProjectGenerationSmokeTests
 		this.enterAction = actions.sendKeys(Keys.ENTER).build();
 	}
 
-	@After
+	@AfterEach
 	public void destroy() {
 		if (this.driver != null) {
 			this.driver.close();
@@ -82,7 +85,7 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void createSimpleProject() throws Exception {
+	void createSimpleProject() throws Exception {
 		HomePage page = toHome();
 		page.submit();
 		assertSimpleProject().isMavenProject().pomAssert().hasDependenciesCount(2)
@@ -90,29 +93,29 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void createSimpleProjectWithGradle() throws Exception {
+	void createSimpleProjectWithGradle() throws Exception {
 		HomePage page = toHome();
 		page.type("gradle-project");
 		page.submit();
 		assertSimpleProject().isGradleProject().gradleBuildAssert()
-				.contains("compile('org.springframework.boot:spring-boot-starter')")
+				.contains("implementation 'org.springframework.boot:spring-boot-starter'")
 				.contains(
-						"testCompile('org.springframework.boot:spring-boot-starter-test')");
+						"testImplementation 'org.springframework.boot:spring-boot-starter-test'");
 	}
 
 	@Test
-	public void createSimpleProjectWithDifferentBootVersion() throws Exception {
+	void createSimpleProjectWithDifferentBootVersion() throws Exception {
 		HomePage page = toHome();
-		page.bootVersion("1.0.2.RELEASE");
+		page.bootVersion("1.5.17.RELEASE");
 		page.submit();
 		assertSimpleProject().isMavenProject().pomAssert()
-				.hasSpringBootParent("1.0.2.RELEASE").hasDependenciesCount(2)
+				.hasSpringBootParent("1.5.17.RELEASE").hasDependenciesCount(2)
 				.hasSpringBootStarterRootDependency().hasSpringBootStarterTest();
 
 	}
 
 	@Test
-	public void createSimpleProjectWithDependencies() throws Exception {
+	void createSimpleProjectWithDependencies() throws Exception {
 		HomePage page = toHome();
 		selectDependency(page, "Data JPA");
 		selectDependency(page, "Security");
@@ -123,7 +126,7 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void selectDependencyTwiceRemovesIt() throws Exception {
+	void selectDependencyTwiceRemovesIt() throws Exception {
 		HomePage page = toHome();
 		selectDependency(page, "Data JPA");
 		selectDependency(page, "Security");
@@ -134,20 +137,19 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void selectDependencyAndChangeToIncompatibleVersionRemovesIt()
-			throws Exception {
+	void selectDependencyAndChangeToIncompatibleVersionRemovesIt() throws Exception {
 		HomePage page = toHome();
 		selectDependency(page, "Data JPA");
 		selectDependency(page, "org.acme:bur");
-		page.bootVersion("1.0.2.RELEASE"); // Bur isn't available anymore
+		page.bootVersion("1.5.17.RELEASE"); // Bur isn't available anymore
 		page.submit();
 		assertSimpleProject().isMavenProject().pomAssert()
-				.hasSpringBootParent("1.0.2.RELEASE").hasDependenciesCount(2)
+				.hasSpringBootParent("1.5.17.RELEASE").hasDependenciesCount(2)
 				.hasSpringBootStarterDependency("data-jpa").hasSpringBootStarterTest();
 	}
 
 	@Test
-	public void customArtifactIdUpdateNameAutomatically() throws Exception {
+	void customArtifactIdUpdateNameAutomatically() throws Exception {
 		HomePage page = toHome();
 		page.groupId("org.foo");
 		page.submit();
@@ -156,7 +158,7 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void customGroupIdIdUpdatePackageAutomatically() throws Exception {
+	void customGroupIdIdUpdatePackageAutomatically() throws Exception {
 		HomePage page = toHome();
 		page.artifactId("my-project");
 		page.submit();
@@ -165,7 +167,7 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void customArtifactIdWithInvalidPackageNameIsHandled() throws Exception {
+	void customArtifactIdWithInvalidPackageNameIsHandled() throws Exception {
 		HomePage page = toHome();
 		page.artifactId("42my-project");
 		page.submit();
@@ -174,7 +176,7 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void createGroovyProject() throws Exception {
+	void createGroovyProject() throws Exception {
 		HomePage page = toHome();
 		page.language("groovy");
 		page.submit();
@@ -186,7 +188,7 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void createKotlinProject() throws Exception {
+	void createKotlinProject() throws Exception {
 		HomePage page = toHome();
 		page.language("kotlin");
 		page.submit();
@@ -199,7 +201,7 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void createWarProject() throws Exception {
+	void createWarProject() throws Exception {
 		HomePage page = toHome();
 		page.advanced();
 		page.packaging("war");
@@ -212,7 +214,7 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void createJavaProjectWithCustomDefaults() throws Exception {
+	void createJavaProjectWithCustomDefaults() throws Exception {
 		HomePage page = toHome();
 		page.groupId("com.acme");
 		page.artifactId("foo-bar");
@@ -234,7 +236,7 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void createKotlinProjectWithCustomDefaults() throws Exception {
+	void createKotlinProjectWithCustomDefaults() throws Exception {
 		HomePage page = toHome();
 		page.groupId("com.acme");
 		page.artifactId("foo-bar");
@@ -257,7 +259,7 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void createGroovyProjectWithCustomDefaults() throws Exception {
+	void createGroovyProjectWithCustomDefaults() throws Exception {
 		HomePage page = toHome();
 		page.groupId("com.acme");
 		page.artifactId("foo-bar");
@@ -280,14 +282,14 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void dependencyHiddenAccordingToRange() throws Exception {
-		HomePage page = toHome(); // bur: [1.1.4.RELEASE,1.2.0.BUILD-SNAPSHOT)
+	void dependencyHiddenAccordingToRange() throws Exception {
+		HomePage page = toHome(); // bur: [2.1.4.RELEASE,2.2.0.BUILD-SNAPSHOT)
 		page.advanced();
 		assertThat(page.dependency("org.acme:bur").isEnabled()).isTrue();
-		page.bootVersion("1.0.2.RELEASE");
+		page.bootVersion("1.5.17.RELEASE");
 		assertThat(page.dependency("org.acme:bur").isEnabled()).isFalse();
 		assertThat(page.dependency("org.acme:biz").isEnabled()).isFalse();
-		page.bootVersion("1.1.4.RELEASE");
+		page.bootVersion("2.1.4.RELEASE");
 		assertThat(page.dependency("org.acme:bur").isEnabled()).isTrue();
 		assertThat(page.dependency("org.acme:biz").isEnabled()).isFalse();
 		page.bootVersion("Latest SNAPSHOT");
@@ -296,20 +298,20 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void dependencyUncheckedWhenHidden() throws Exception {
-		HomePage page = toHome(); // bur: [1.1.4.RELEASE,1.2.0.BUILD-SNAPSHOT)
+	void dependencyUncheckedWhenHidden() throws Exception {
+		HomePage page = toHome(); // bur: [2.1.4.RELEASE,2.2.0.BUILD-SNAPSHOT)
 		page.advanced();
 		page.dependency("org.acme:bur").click();
 		assertThat(page.dependency("org.acme:bur").isSelected()).isTrue();
-		page.bootVersion("1.0.2.RELEASE");
+		page.bootVersion("1.5.17.RELEASE");
 		assertThat(page.dependency("org.acme:bur").isEnabled()).isFalse();
-		page.bootVersion("1.1.4.RELEASE");
+		page.bootVersion("2.1.4.RELEASE");
 		assertThat(page.dependency("org.acme:bur").isEnabled()).isTrue();
 		assertThat(page.dependency("org.acme:bur").isSelected()).isFalse();
 	}
 
 	@Test
-	public void customizationShowsUpInDefaultView() throws Exception {
+	void customizationShowsUpInDefaultView() throws Exception {
 		HomePage page = toHome("/#!language=groovy&packageName=com.example.acme");
 		assertThat(page.value("language")).isEqualTo("groovy");
 		assertThat(page.value("packageName")).isEqualTo("com.example.acme");
@@ -324,7 +326,7 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void customizationsShowsUpWhenViewIsSwitched() throws Exception {
+	void customizationsShowsUpWhenViewIsSwitched() throws Exception {
 		HomePage page = toHome("/#!packaging=war&javaVersion=1.7");
 		assertThat(page.value("packaging")).isEqualTo("war");
 		assertThat(page.value("javaVersion")).isEqualTo("1.7");
@@ -337,7 +339,7 @@ public class ProjectGenerationSmokeTests
 	}
 
 	@Test
-	public void customizationsOnGroupIdAndArtifactId() throws Exception {
+	void customizationsOnGroupIdAndArtifactId() throws Exception {
 		HomePage page = toHome("/#!groupId=com.example.acme&artifactId=my-project");
 		page.submit();
 		ProjectAssert projectAssert = zipProjectAssert(from("my-project.zip"));

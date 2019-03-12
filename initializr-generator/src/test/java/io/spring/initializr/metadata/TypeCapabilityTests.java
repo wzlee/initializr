@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,23 @@
 
 package io.spring.initializr.metadata;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Stephane Nicoll
  */
-public class TypeCapabilityTests {
+class TypeCapabilityTests {
 
 	@Test
-	public void defaultEmpty() {
+	void defaultEmpty() {
 		TypeCapability capability = new TypeCapability();
 		assertThat(capability.getDefault()).isNull();
 	}
 
 	@Test
-	public void defaultNoDefault() {
+	void defaultNoDefault() {
 		TypeCapability capability = new TypeCapability();
 		Type first = new Type();
 		first.setId("foo");
@@ -46,7 +46,7 @@ public class TypeCapabilityTests {
 	}
 
 	@Test
-	public void defaultType() {
+	void defaultType() {
 		TypeCapability capability = new TypeCapability();
 		Type first = new Type();
 		first.setId("foo");
@@ -60,7 +60,7 @@ public class TypeCapabilityTests {
 	}
 
 	@Test
-	public void mergeAddEntry() {
+	void mergeAddEntry() {
 		TypeCapability capability = new TypeCapability();
 		Type first = new Type();
 		first.setId("foo");

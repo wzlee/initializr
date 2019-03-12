@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,7 +246,7 @@ public class InitializrMetadata {
 			String versionProperty) {
 		BillOfMaterials bom = BillOfMaterials.create("org.springframework.boot",
 				"spring-boot-dependencies", bootVersion);
-		bom.setVersionProperty(new VersionProperty(versionProperty));
+		bom.setVersionProperty(VersionProperty.of(versionProperty));
 		bom.setOrder(100);
 		return bom;
 	}
@@ -274,7 +274,7 @@ public class InitializrMetadata {
 	private static String defaultId(
 			Defaultable<? extends DefaultMetadataElement> element) {
 		DefaultMetadataElement defaultValue = element.getDefault();
-		return defaultValue != null ? defaultValue.getId() : null;
+		return (defaultValue != null) ? defaultValue.getId() : null;
 	}
 
 	private static class ArtifactIdCapability extends TextCapability {
@@ -289,7 +289,7 @@ public class InitializrMetadata {
 		@Override
 		public String getContent() {
 			String value = super.getContent();
-			return value == null ? this.nameCapability.getContent() : value;
+			return (value != null) ? value : this.nameCapability.getContent();
 		}
 
 	}

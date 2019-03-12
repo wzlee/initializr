@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,79 +23,68 @@ import io.spring.initializr.metadata.BillOfMaterials.Mapping;
 import io.spring.initializr.metadata.InitializrConfiguration.Env.Kotlin;
 import io.spring.initializr.test.metadata.InitializrMetadataTestBuilder;
 import io.spring.initializr.util.Version;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * @author Stephane Nicoll
  */
-public class InitializrMetadataTests {
-
-	@Rule
-	public final ExpectedException thrown = ExpectedException.none();
+class InitializrMetadataTests {
 
 	@Test
-	public void invalidBom() {
+	void invalidBom() {
 		Dependency foo = Dependency.withId("foo", "org.acme", "foo");
 		foo.setBom("foo-bom");
 		InitializrMetadataTestBuilder builder = InitializrMetadataTestBuilder
 				.withDefaults().addBom("my-bom", "org.acme", "foo", "1.2.3")
 				.addDependencyGroup("test", foo);
-
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		this.thrown.expectMessage("foo-bom");
-		this.thrown.expectMessage("my-bom");
-		builder.build();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(builder::build).withMessageContaining("foo-bom")
+				.withMessageContaining("my-bom");
 	}
 
 	@Test
-	public void invalidRepository() {
+	void invalidRepository() {
 		Dependency foo = Dependency.withId("foo", "org.acme", "foo");
 		foo.setRepository("foo-repo");
 		InitializrMetadataTestBuilder builder = InitializrMetadataTestBuilder
 				.withDefaults()
 				.addRepository("my-repo", "repo", "http://example.com/repo", true)
 				.addDependencyGroup("test", foo);
-
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		this.thrown.expectMessage("foo-repo");
-		this.thrown.expectMessage("my-repo");
-		builder.build();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(builder::build).withMessageContaining("foo-repo")
+				.withMessageContaining("my-repo");
 	}
 
 	@Test
-	public void invalidBomNoVersion() {
+	void invalidBomNoVersion() {
 		BillOfMaterials bom = BillOfMaterials.create("org.acme", "foo-bom");
 
 		InitializrMetadataTestBuilder builder = InitializrMetadataTestBuilder
 				.withDefaults().addBom("foo-bom", bom);
-
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		this.thrown.expectMessage("No version");
-		this.thrown.expectMessage("foo-bom");
-		builder.build();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(builder::build).withMessageContaining("No version")
+				.withMessageContaining("foo-bom");
 	}
 
 	@Test
-	public void invalidBomUnknownRepository() {
+	void invalidBomUnknownRepository() {
 		BillOfMaterials bom = BillOfMaterials.create("org.acme", "foo-bom",
 				"1.0.0.RELEASE");
 		bom.getRepositories().add("foo-repo");
 
 		InitializrMetadataTestBuilder builder = InitializrMetadataTestBuilder
 				.withDefaults().addBom("foo-bom", bom);
-
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		this.thrown.expectMessage("invalid repository id foo-repo");
-		this.thrown.expectMessage("foo-bom");
-		builder.build();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(builder::build)
+				.withMessageContaining("invalid repository id foo-repo")
+				.withMessageContaining("foo-bom");
 	}
 
 	@Test
-	public void invalidBomUnknownAdditionalBom() {
+	void invalidBomUnknownAdditionalBom() {
 		BillOfMaterials bom = BillOfMaterials.create("org.acme", "foo-bom",
 				"1.0.0.RELEASE");
 		bom.getAdditionalBoms().addAll(Arrays.asList("bar-bom", "biz-bom"));
@@ -104,30 +93,27 @@ public class InitializrMetadataTests {
 
 		InitializrMetadataTestBuilder builder = InitializrMetadataTestBuilder
 				.withDefaults().addBom("foo-bom", bom).addBom("bar-bom", barBom);
-
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		this.thrown.expectMessage("invalid additional bom");
-		this.thrown.expectMessage("biz-bom");
-		builder.build();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(builder::build)
+				.withMessageContaining("invalid additional bom")
+				.withMessageContaining("biz-bom");
 	}
 
 	@Test
-	public void invalidBomVersionRangeMapping() {
+	void invalidBomVersionRangeMapping() {
 		BillOfMaterials bom = BillOfMaterials.create("org.acme", "foo-bom");
 		bom.getMappings().add(Mapping.create("[1.2.0.RELEASE,1.3.0.M1)", "1.0.0"));
 		bom.getMappings().add(Mapping.create("FOO_BAR", "1.2.0"));
 
 		InitializrMetadataTestBuilder builder = InitializrMetadataTestBuilder
 				.withDefaults().addBom("foo-bom", bom);
-
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		this.thrown.expectMessage("FOO_BAR");
-		this.thrown.expectMessage("foo-bom");
-		builder.build();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(builder::build).withMessageContaining("FOO_BAR")
+				.withMessageContaining("foo-bom");
 	}
 
 	@Test
-	public void invalidBomVersionRangeMappingUnknownRepo() {
+	void invalidBomVersionRangeMappingUnknownRepo() {
 		BillOfMaterials bom = BillOfMaterials.create("org.acme", "foo-bom");
 		bom.getMappings().add(Mapping.create("[1.0.0.RELEASE,1.3.0.M1)", "1.0.0"));
 		Mapping mapping = Mapping.create("1.3.0.M2", "1.2.0");
@@ -136,16 +122,14 @@ public class InitializrMetadataTests {
 
 		InitializrMetadataTestBuilder builder = InitializrMetadataTestBuilder
 				.withDefaults().addBom("foo-bom", bom);
-
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		this.thrown.expectMessage("invalid repository id foo-repo");
-		this.thrown.expectMessage("1.3.0.M2");
-		this.thrown.expectMessage("foo-bom");
-		builder.build();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(builder::build)
+				.withMessageContaining("invalid repository id foo-repo")
+				.withMessageContaining("1.3.0.M2").withMessageContaining("foo-bom");
 	}
 
 	@Test
-	public void invalidBomVersionRangeMappingUnknownAdditionalBom() {
+	void invalidBomVersionRangeMappingUnknownAdditionalBom() {
 		BillOfMaterials bom = BillOfMaterials.create("org.acme", "foo-bom");
 		bom.getMappings().add(Mapping.create("[1.0.0.RELEASE,1.3.0.M1)", "1.0.0"));
 		Mapping mapping = Mapping.create("1.3.0.M2", "1.2.0");
@@ -154,16 +138,14 @@ public class InitializrMetadataTests {
 
 		InitializrMetadataTestBuilder builder = InitializrMetadataTestBuilder
 				.withDefaults().addBom("foo-bom", bom);
-
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		this.thrown.expectMessage("invalid additional bom");
-		this.thrown.expectMessage("1.3.0.M2");
-		this.thrown.expectMessage("bar-bom");
-		builder.build();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(builder::build)
+				.withMessageContaining("invalid additional bom")
+				.withMessageContaining("1.3.0.M2").withMessageContaining("bar-bom");
 	}
 
 	@Test
-	public void updateSpringBootVersions() {
+	void updateSpringBootVersions() {
 		BillOfMaterials bom = BillOfMaterials.create("org.acme", "foo-bom");
 		bom.getMappings().add(Mapping.create("[1.2.0.RELEASE,1.3.x.RELEASE]", "1.0.0"));
 		bom.getMappings()
@@ -202,18 +184,16 @@ public class InitializrMetadataTests {
 	}
 
 	@Test
-	public void invalidParentMissingVersion() {
+	void invalidParentMissingVersion() {
 		InitializrMetadataTestBuilder builder = InitializrMetadataTestBuilder
 				.withDefaults().setMavenParent("org.foo", "foo-parent", null, false);
-
-		this.thrown.expect(InvalidInitializrMetadataException.class);
-		this.thrown.expectMessage(
-				"Custom maven pom requires groupId, artifactId and version");
-		builder.build();
+		assertThatExceptionOfType(InvalidInitializrMetadataException.class)
+				.isThrownBy(builder::build).withMessageContaining(
+						"Custom maven pom requires groupId, artifactId and version");
 	}
 
 	@Test
-	public void stripInvalidCharsFromPackage() {
+	void stripInvalidCharsFromPackage() {
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.build();
 		metadata.getGroupId().setContent("org.acme");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,58 +16,53 @@
 
 package io.spring.initializr.util;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link VersionProperty}.
  *
  * @author Stephane Nicoll
  */
-public class VersionPropertyTests {
-
-	@Rule
-	public final ExpectedException thrown = ExpectedException.none();
+class VersionPropertyTests {
 
 	@Test
-	public void testStandardProperty() {
-		assertThat(new VersionProperty("spring-boot.version").toStandardFormat())
+	void testStandardProperty() {
+		assertThat(VersionProperty.of("spring-boot.version").toStandardFormat())
 				.isEqualTo("spring-boot.version");
 	}
 
 	@Test
-	public void testCamelCaseProperty() {
-		assertThat(new VersionProperty("spring-boot.version").toCamelCaseFormat())
+	void testCamelCaseProperty() {
+		assertThat(VersionProperty.of("spring-boot.version").toCamelCaseFormat())
 				.isEqualTo("springBootVersion");
 	}
 
 	@Test
-	public void testStandardPropertyWithNoSeparator() {
-		assertThat(new VersionProperty("springbootversion").toStandardFormat())
+	void testStandardPropertyWithNoSeparator() {
+		assertThat(VersionProperty.of("springbootversion").toStandardFormat())
 				.isEqualTo("springbootversion");
 	}
 
 	@Test
-	public void testCamelCasePropertyWithNoSeparator() {
-		assertThat(new VersionProperty("springbootversion").toCamelCaseFormat())
+	void testCamelCasePropertyWithNoSeparator() {
+		assertThat(VersionProperty.of("springbootversion").toCamelCaseFormat())
 				.isEqualTo("springbootversion");
 	}
 
 	@Test
-	public void testInvalidPropertyUpperCase() {
-		this.thrown.expect(IllegalArgumentException.class);
-		this.thrown.expectMessage("upper case");
-		new VersionProperty("Spring-boot.version");
+	void testInvalidPropertyUpperCase() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> VersionProperty.of("Spring-boot.version"));
 	}
 
 	@Test
-	public void testInvalidPropertyIllegalCharacter() {
-		this.thrown.expect(IllegalArgumentException.class);
-		this.thrown.expectMessage("Unsupported character");
-		new VersionProperty("spring-boot_version");
+	void testInvalidPropertyIllegalCharacter() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> VersionProperty.of("spring-boot_version"))
+				.withMessageContaining("Unsupported character");
 	}
 
 }

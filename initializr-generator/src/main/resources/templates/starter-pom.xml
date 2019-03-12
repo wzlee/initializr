@@ -2,21 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-
-	<groupId>{{groupId}}</groupId>
-	<artifactId>{{artifactId}}</artifactId>
-	<version>{{version}}</version>
-	<packaging>{{packaging}}</packaging>
-
-	<name>{{name}}</name>
-	<description>{{description}}</description>
-
 	<parent>
 		<groupId>{{mavenParentGroupId}}</groupId>
 		<artifactId>{{mavenParentArtifactId}}</artifactId>
 		<version>{{mavenParentVersion}}</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
+	<groupId>{{groupId}}</groupId>
+	<artifactId>{{artifactId}}</artifactId>
+	<version>{{version}}</version>{{^defaultPackaging}}
+	<packaging>{{packaging}}</packaging>{{/defaultPackaging}}
+	<name>{{name}}</name>
+	<description>{{description}}</description>
 
 	<properties>
 		{{#buildPropertiesMaven}}
@@ -46,17 +43,17 @@
 			<artifactId>groovy</artifactId>
 		</dependency>
 		{{/groovy}}
-		{{#kotlin}}                                                     
+		{{#kotlin}}
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
-			<artifactId>{{kotlinStdlibArtifactId}}</artifactId>
+			<artifactId>kotlin-reflect</artifactId>
 			{{^kotlinSupport}}
 			<version>${kotlin.version}</version>
 			{{/kotlinSupport}}
 		</dependency>
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
-			<artifactId>kotlin-reflect</artifactId>
+			<artifactId>{{kotlinStdlibArtifactId}}</artifactId>
 			{{^kotlinSupport}}
 			<version>${kotlin.version}</version>
 			{{/kotlinSupport}}
@@ -89,6 +86,19 @@
 			{{/type}}
 		</dependency>
 		{{/compileOnlyDependencies}}
+		{{#annotationProcessorDependencies}}
+		<dependency>
+			<groupId>{{groupId}}</groupId>
+			<artifactId>{{artifactId}}</artifactId>
+			{{#version}}
+			<version>{{version}}</version>
+			{{/version}}
+			<optional>true</optional>
+			{{#type}}
+			<type>{{type}}</type>
+			{{/type}}
+		</dependency>
+		{{/annotationProcessorDependencies}}
 		{{#providedDependencies}}
 		<dependency>
 			<groupId>{{groupId}}</groupId>
@@ -171,8 +181,8 @@
 			{{/groovy}}
 			{{#kotlin}}
 			<plugin>
-				<artifactId>kotlin-maven-plugin</artifactId>
 				<groupId>org.jetbrains.kotlin</groupId>
+				<artifactId>kotlin-maven-plugin</artifactId>
 				{{^kotlinSupport}}
 				<version>${kotlin.version}</version>
 				{{/kotlinSupport}}
@@ -182,6 +192,9 @@
 					</args>
 					<compilerPlugins>
 						<plugin>spring</plugin>
+						{{#facets.jpa}}
+						<plugin>jpa</plugin>
+						{{/facets.jpa}}
 					</compilerPlugins>
 					{{^kotlinSupport}}
 					{{#java8OrLater}}
@@ -213,6 +226,13 @@
 						<artifactId>kotlin-maven-allopen</artifactId>
 						<version>${kotlin.version}</version>
 					</dependency>
+					{{#facets.jpa}}
+					<dependency>
+						<groupId>org.jetbrains.kotlin</groupId>
+						<artifactId>kotlin-maven-noarg</artifactId>
+						<version>${kotlin.version}</version>
+					</dependency>
+					{{/facets.jpa}}
 				</dependencies>
 			</plugin>
 			{{/kotlin}}
@@ -226,15 +246,16 @@
 			<id>{{key}}</id>
 			<name>{{value.name}}</name>
 			<url>{{value.url}}</url>
+			{{#value.snapshotsEnabled}}
 			<snapshots>
-				<enabled>{{value.snapshotsEnabled}}</enabled>
+				<enabled>true</enabled>
 			</snapshots>
+			{{/value.snapshotsEnabled}}
 		</repository>
 		{{/repositoryValues}}
 	</repositories>
 {{/hasRepositories}}
 {{^isRelease}}
-
 	<pluginRepositories>
 		<pluginRepository>
 			<id>spring-snapshots</id>
@@ -248,12 +269,8 @@
 			<id>spring-milestones</id>
 			<name>Spring Milestones</name>
 			<url>https://repo.spring.io/milestone</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
 		</pluginRepository>
 	</pluginRepositories>
 {{/isRelease}}
-
 
 </project>

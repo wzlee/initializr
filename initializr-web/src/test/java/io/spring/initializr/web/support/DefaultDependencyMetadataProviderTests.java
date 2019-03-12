@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,28 +23,28 @@ import io.spring.initializr.metadata.DependencyMetadataProvider;
 import io.spring.initializr.metadata.InitializrMetadata;
 import io.spring.initializr.test.metadata.InitializrMetadataTestBuilder;
 import io.spring.initializr.util.Version;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Stephane Nicoll
  */
-public class DefaultDependencyMetadataProviderTests {
+class DefaultDependencyMetadataProviderTests {
 
 	private final DependencyMetadataProvider provider = new DefaultDependencyMetadataProvider();
 
 	@Test
-	public void filterDependencies() {
+	void filterDependencies() {
 		Dependency first = Dependency.withId("first", "org.foo", "first");
-		first.setVersionRange("1.1.4.RELEASE");
+		first.setVersionRange("2.1.4.RELEASE");
 		Dependency second = Dependency.withId("second", "org.foo", "second");
 		Dependency third = Dependency.withId("third", "org.foo", "third");
-		third.setVersionRange("1.1.8.RELEASE");
+		third.setVersionRange("2.1.8.RELEASE");
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.addDependencyGroup("test", first, second, third).build();
 		DependencyMetadata dependencyMetadata = this.provider.get(metadata,
-				Version.parse("1.1.5.RELEASE"));
+				Version.parse("2.1.5.RELEASE"));
 		assertThat(dependencyMetadata.getDependencies()).hasSize(2);
 		assertThat(dependencyMetadata.getRepositories()).isEmpty();
 		assertThat(dependencyMetadata.getBoms()).isEmpty();
@@ -53,7 +53,7 @@ public class DefaultDependencyMetadataProviderTests {
 	}
 
 	@Test
-	public void resolveDependencies() {
+	void resolveDependencies() {
 		Dependency first = Dependency.withId("first", "org.foo", "first");
 		first.getMappings().add(Dependency.Mapping.create(
 				"[1.0.0.RELEASE, 1.1.0.RELEASE)", "org.bar", "second", "0.1.0.RELEASE"));
@@ -86,7 +86,7 @@ public class DefaultDependencyMetadataProviderTests {
 	}
 
 	@Test
-	public void addRepoAndRemoveDuplicates() {
+	void addRepoAndRemoveDuplicates() {
 		Dependency first = Dependency.withId("first", "org.foo", "first");
 		first.setRepository("repo-foo");
 		Dependency second = Dependency.withId("second", "org.foo", "second");
@@ -105,7 +105,7 @@ public class DefaultDependencyMetadataProviderTests {
 	}
 
 	@Test
-	public void addBomAndRemoveDuplicates() {
+	void addBomAndRemoveDuplicates() {
 		Dependency first = Dependency.withId("first", "org.foo", "first");
 		first.setBom("bom-foo");
 		Dependency second = Dependency.withId("second", "org.foo", "second");
@@ -134,7 +134,7 @@ public class DefaultDependencyMetadataProviderTests {
 	}
 
 	@Test
-	public void repoFromBomAccordingToVersion() {
+	void repoFromBomAccordingToVersion() {
 		DependencyMetadata dependencyMetadata = testRepoFromBomAccordingToVersion(
 				"1.0.9.RELEASE");
 		assertThat(dependencyMetadata.getBootVersion())
@@ -155,7 +155,7 @@ public class DefaultDependencyMetadataProviderTests {
 	}
 
 	@Test
-	public void repoFromBomAccordingToAnotherVersion() {
+	void repoFromBomAccordingToAnotherVersion() {
 		DependencyMetadata dependencyMetadata = testRepoFromBomAccordingToVersion(
 				"1.1.5.RELEASE");
 		assertThat(dependencyMetadata.getBootVersion())

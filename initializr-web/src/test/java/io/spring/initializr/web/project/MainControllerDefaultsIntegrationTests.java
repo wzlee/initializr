@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package io.spring.initializr.web.project;
 
 import io.spring.initializr.test.generator.PomAssert;
 import io.spring.initializr.web.AbstractInitializrControllerIntegrationTests;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.test.context.ActiveProfiles;
 
@@ -28,13 +28,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Stephane Nicoll
  */
 @ActiveProfiles({ "test-default", "test-custom-defaults" })
-public class MainControllerDefaultsIntegrationTests
+class MainControllerDefaultsIntegrationTests
 		extends AbstractInitializrControllerIntegrationTests {
 
 	// see defaults customization
 
 	@Test
-	public void generateDefaultPom() {
+	void generateDefaultPom() {
 		String content = getRestTemplate().getForObject(createUrl("/pom.xml?style=web"),
 				String.class);
 		PomAssert pomAssert = new PomAssert(content);
@@ -44,7 +44,7 @@ public class MainControllerDefaultsIntegrationTests
 	}
 
 	@Test
-	public void defaultsAppliedToHome() {
+	void defaultsAppliedToHome() {
 		String body = htmlHome();
 		assertThat(body).as("custom groupId not found").contains("org.foo");
 		assertThat(body).as("custom artifactId not found").contains("foo-bar");

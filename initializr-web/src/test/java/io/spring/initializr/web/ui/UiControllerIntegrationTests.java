@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package io.spring.initializr.web.ui;
 import io.spring.initializr.web.AbstractInitializrControllerIntegrationTests;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 
@@ -31,18 +31,17 @@ import org.springframework.test.context.ActiveProfiles;
  * @author Stephane Nicoll
  */
 @ActiveProfiles("test-default")
-public class UiControllerIntegrationTests
-		extends AbstractInitializrControllerIntegrationTests {
+class UiControllerIntegrationTests extends AbstractInitializrControllerIntegrationTests {
 
 	@Test
-	public void dependenciesNoVersion() throws JSONException {
+	void dependenciesNoVersion() throws JSONException {
 		ResponseEntity<String> response = execute("/ui/dependencies", String.class, null);
 		validateContentType(response, MediaType.APPLICATION_JSON);
 		validateDependenciesOutput("all", response.getBody());
 	}
 
 	@Test
-	public void dependenciesSpecificVersion() throws JSONException {
+	void dependenciesSpecificVersion() throws JSONException {
 		ResponseEntity<String> response = execute(
 				"/ui/dependencies?version=1.1.2.RELEASE", String.class, null);
 		validateContentType(response, MediaType.APPLICATION_JSON);

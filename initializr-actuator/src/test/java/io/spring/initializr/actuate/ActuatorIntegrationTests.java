@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.spring.initializr.web.AbstractFullStackInitializrIntegrationTests;
 import io.spring.initializr.web.AbstractInitializrIntegrationTests.Config;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -37,19 +37,18 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @ActiveProfiles("test-default")
 @SpringBootTest(classes = Config.class, webEnvironment = WebEnvironment.RANDOM_PORT, properties = "management.endpoints.web.exposure.include=info,metrics")
-public class ActuatorIntegrationTests
-		extends AbstractFullStackInitializrIntegrationTests {
+class ActuatorIntegrationTests extends AbstractFullStackInitializrIntegrationTests {
 
 	@Test
-	public void infoHasExternalProperties() {
+	void infoHasExternalProperties() {
 		String body = getRestTemplate().getForObject(createUrl("/actuator/info"),
 				String.class);
 		assertThat(body).contains("\"spring-boot\"");
-		assertThat(body).contains("\"version\":\"1.1.4.RELEASE\"");
+		assertThat(body).contains("\"version\":\"2.1.4.RELEASE\"");
 	}
 
 	@Test
-	public void metricsAreRegistered() {
+	void metricsAreRegistered() {
 		downloadZip("/starter.zip?packaging=jar&javaVersion=1.8&style=web&style=jpa");
 		JsonNode result = metricsEndpoint();
 		JsonNode names = result.get("names");

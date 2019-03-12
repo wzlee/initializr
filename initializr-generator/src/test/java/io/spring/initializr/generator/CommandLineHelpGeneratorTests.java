@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,32 @@
 
 package io.spring.initializr.generator;
 
+import java.util.Arrays;
+
 import io.spring.initializr.metadata.Dependency;
 import io.spring.initializr.metadata.InitializrMetadata;
 import io.spring.initializr.metadata.Type;
 import io.spring.initializr.test.metadata.InitializrMetadataTestBuilder;
 import io.spring.initializr.util.TemplateRenderer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Stephane Nicoll
  */
-public class CommandLineHelpGeneratorTests {
+class CommandLineHelpGeneratorTests {
 
 	private CommandLineHelpGenerator generator;
 
-	@Before
+	@BeforeEach
 	public void init() {
 		this.generator = new CommandLineHelpGenerator(new TemplateRenderer());
 	}
 
 	@Test
-	public void generateGenericCapabilities() {
+	void generateGenericCapabilities() {
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.addDependencyGroup("test", createDependency("id-b", "depB"),
 						createDependency("id-a", "depA", "and some description"))
@@ -55,7 +57,7 @@ public class CommandLineHelpGeneratorTests {
 	}
 
 	@Test
-	public void generateCapabilitiesWithTypeDescription() {
+	void generateCapabilitiesWithTypeDescription() {
 		Type type = new Type();
 		type.setId("foo");
 		type.setName("foo-name");
@@ -70,7 +72,20 @@ public class CommandLineHelpGeneratorTests {
 	}
 
 	@Test
-	public void generateCurlCapabilities() {
+	void generateCapabilitiesWithAlias() {
+		Dependency dependency = createDependency("dep", "some description");
+		dependency.setAliases(Arrays.asList("legacy", "another"));
+		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
+				.addDependencyGroup("test", dependency).build();
+		String content = this.generator.generateGenericCapabilities(metadata,
+				"https://fake-service");
+		assertCommandLineCapabilities(content);
+		assertThat(content).contains("dep | some description |");
+		assertThat(content).doesNotContain("legacy").doesNotContain("another");
+	}
+
+	@Test
+	void generateCurlCapabilities() {
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.addDependencyGroup("test", createDependency("id-b", "depB"),
 						createDependency("id-a", "depA", "and some description"))
@@ -86,7 +101,7 @@ public class CommandLineHelpGeneratorTests {
 	}
 
 	@Test
-	public void generateHttpCapabilities() {
+	void generateHttpCapabilities() {
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.addDependencyGroup("test", createDependency("id-b", "depB"),
 						createDependency("id-a", "depA", "and some description"))
@@ -103,7 +118,7 @@ public class CommandLineHelpGeneratorTests {
 	}
 
 	@Test
-	public void generateSpringBootCliCapabilities() {
+	void generateSpringBootCliCapabilities() {
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.addDependencyGroup("test", createDependency("id-b", "depB"),
 						createDependency("id-a", "depA", "and some description"))
@@ -124,7 +139,7 @@ public class CommandLineHelpGeneratorTests {
 	}
 
 	@Test
-	public void generateCapabilitiesWithVersionRange() {
+	void generateCapabilitiesWithVersionRange() {
 		Dependency first = Dependency.withId("first");
 		first.setDescription("first desc");
 		first.setVersionRange("1.2.0.RELEASE");

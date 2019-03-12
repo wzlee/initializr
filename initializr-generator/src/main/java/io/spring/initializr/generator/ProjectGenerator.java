@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ package io.spring.initializr.generator;
 import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
 import io.spring.initializr.InitializrException;
 import io.spring.initializr.metadata.BillOfMaterials;
 import io.spring.initializr.metadata.Dependency;
+import io.spring.initializr.metadata.InitializrConfiguration.Env.Maven;
 import io.spring.initializr.metadata.InitializrConfiguration.Env.Maven.ParentPom;
 import io.spring.initializr.metadata.InitializrMetadata;
 import io.spring.initializr.metadata.InitializrMetadataProvider;
@@ -65,23 +67,9 @@ public class ProjectGenerator {
 
 	private static final Logger log = LoggerFactory.getLogger(ProjectGenerator.class);
 
-	private static final Version VERSION_1_2_0_RC1 = Version.parse("1.2.0.RC1");
+	private static final Version VERSION_1_5_0 = Version.parse("1.5.0.RELEASE");
 
-	private static final Version VERSION_1_3_0_M1 = Version.parse("1.3.0.M1");
-
-	private static final Version VERSION_1_4_0_M2 = Version.parse("1.4.0.M2");
-
-	private static final Version VERSION_1_4_0_M3 = Version.parse("1.4.0.M3");
-
-	private static final Version VERSION_1_4_2_M1 = Version.parse("1.4.2.M1");
-
-	private static final Version VERSION_1_5_0_M1 = Version.parse("1.5.0.M1");
-
-	private static final Version VERSION_2_0_0_M1 = Version.parse("2.0.0.M1");
-
-	private static final Version VERSION_2_0_0_M3 = Version.parse("2.0.0.M3");
-
-	private static final Version VERSION_2_0_0_M6 = Version.parse("2.0.0.M6");
+	private static final Version VERSION_2_0_0 = Version.parse("2.0.0.RELEASE");
 
 	@Autowired
 	private ApplicationEventPublisher eventPublisher;
@@ -214,21 +202,20 @@ public class ProjectGenerator {
 	 */
 	protected File generateProjectStructure(ProjectRequest request,
 			Map<String, Object> model) {
-		File rootDir;
-		try {
-			rootDir = File.createTempFile("tmp", "", getTemporaryDirectory());
-		}
-		catch (IOException e) {
-			throw new IllegalStateException("Cannot create temp dir", e);
-		}
-		addTempFile(rootDir.getName(), rootDir);
-		rootDir.delete();
-		rootDir.mkdirs();
+//		File rootDir;
+//		try {
+//			rootDir = File.createTempFile("tmp", "", getTemporaryDirectory());
+//		}
+//		catch (IOException ex) {
+//			throw new IllegalStateException("Cannot create temp dir", ex);
+//		}
+//		addTempFile(rootDir.getName(), rootDir);
+//		rootDir.delete();
+//		rootDir.mkdirs();
 
-		File dir = initializerProjectDir(rootDir, request);
-		
+//		File dir = initializerProjectDir(rootDir, request);
+		File dir = initializerProjectDir(request);
 		generateDubboFiles(dir, request, model);
-		
 		if (isGradleBuild(request)) {
 			String gradle = new String(doGenerateGradleBuild(model));
 			writeText(new File(dir, "build.gradle"), gradle);
@@ -267,15 +254,25 @@ public class ProjectGenerator {
 		write(new File(test, applicationName + "Tests." + extension),
 				"ApplicationTests." + extension, model);
 
-		File resources = new File(dir, "src/main/resources");
-		resources.mkdirs();
-		write(new File(resources, "application.properties"), "application.properties", model);
+//		File resources = new File(dir, "src/main/resources");
+//		resources.mkdirs();
+//		write(new File(resources, "application.properties"), "application.properties", model);
+		
+		File bin = new File(dir, "src/main/resources/bin");
+		bin.mkdirs();
+		write(new File(bin, "startup.sh"), "bin/startup.sh", model);
+		write(new File(bin, "shutdown.sh"), "bin/shutdown.sh", model);
+		write(new File(bin, "run.sh"), "bin/run.sh", model);
+		
+		File config = new File(dir, "src/main/resources/config");
+		config.mkdirs();
+		write(new File(config, "bootstrap.properties"), "bootstrap.properties", model);
 
 		if (request.hasWebFacet()) {
 			new File(dir, "src/main/resources/templates").mkdirs();
 			new File(dir, "src/main/resources/static").mkdirs();
 		}
-		return rootDir;
+		return dir;
 	}
 
 	protected void generateDubboFiles(File dir, ProjectRequest request,
@@ -285,48 +282,38 @@ public class ProjectGenerator {
 		}
 
 		String language = request.getLanguage();
-		
-		if(request.getDubboSide().equals("dubboClient")) {
+		if (request.getDubboSide().equals("dubboClient")) {
 			model.put("isDubboClient", true);
 		}
 		boolean isDubboServer = false;
-		if(request.getDubboSide().equals("dubboServer")) {
+		if (request.getDubboSide().equals("dubboServer")) {
 			isDubboServer = true;
 			model.put("isDubboServer", true);
 		}
 		boolean embeddedZookeeper = false;
-		if(request.getEmbeddedZookeeper() != null && request.getEmbeddedZookeeper() == true) {
+		if (request.getEmbeddedZookeeper() != null && request.getEmbeddedZookeeper()) {
 			embeddedZookeeper = true;
 			model.put("embeddedZookeeper", true);
 		}
-		
 		// 创建dubbo的 package 目录，然后设置属性到 model里，再生成一个个的文件
 		String.class.getCanonicalName();
 		String dubboServiceName = request.getDubboServiceName();
 		String dubboPackageName = packageName(dubboServiceName);
 		model.put("dubboPackageName", dubboPackageName);
-		
 		String codeLocation = language;
-		File src = new File(new File(dir, "src/main/" + codeLocation),
-				request.getPackageName().replace(".", "/"));
+		File src = new File(new File(dir, "src/main/" + codeLocation), request.getPackageName().replace(".", "/"));
 		src.mkdirs();
-		
-		File dubboSrc = new File(new File(dir, "src/main/" + codeLocation),
-				dubboPackageName.replace(".", "/"));
+		File dubboSrc = new File(new File(dir, "src/main/" + codeLocation), dubboPackageName.replace(".", "/"));
 		dubboSrc.mkdirs();
-		
 		String extension = ("kotlin".equals(language) ? "kt" : language);
-		
 		String serviceSimpleName = simpleName(dubboServiceName);
 		model.put("serviceSimpleName", serviceSimpleName);
-		
 		this.write(new File(dubboSrc, serviceSimpleName + "." + extension), "DemoService." + extension, model);
-		
-		if(request.getDubboSide().equals("dubboServer")) {
+		if (request.getDubboSide().equals("dubboServer")) {
 			String implFileName = serviceSimpleName + "Impl." + extension;
 			this.write(new File(dubboSrc, implFileName), "DemoServiceImpl." + extension, model);
 		}
-		if(embeddedZookeeper && isDubboServer) {
+		if (embeddedZookeeper && isDubboServer) {
 			write(new File(src, "EmbeddedZooKeeper." + extension),
 					"EmbeddedZooKeeper." + extension, model);
 		}
@@ -336,15 +323,14 @@ public class ProjectGenerator {
 
 	private String packageName(String className) {
 		int index = className.lastIndexOf('.');
-		if(index > 0) {
+		if (index > 0) {
 			return className.substring(0, index);
 		}
 		return "";
 	}
-	
 	private static String simpleName(String className) {
 		int index = className.lastIndexOf('.');
-		if(index > 0) {
+		if (index > 0) {
 			return className.substring(index + 1, className.length());
 		}
 		return className;
@@ -432,6 +418,11 @@ public class ProjectGenerator {
 
 		// request resolved so we can log what has been requested
 		Version bootVersion = Version.safeParse(request.getBootVersion());
+		if (bootVersion.compareTo(VERSION_1_5_0) < 0) {
+			throw new InvalidProjectRequestException("Invalid Spring Boot version "
+					+ bootVersion + " must be 1.5.0 or higher");
+		}
+
 		List<Dependency> dependencies = request.getResolvedDependencies();
 		List<String> dependencyIds = dependencies.stream().map(Dependency::getId)
 				.collect(Collectors.toList());
@@ -442,24 +433,30 @@ public class ProjectGenerator {
 			model.put("war", true);
 		}
 
-		// Kotlin supported as of M6
-		final boolean kotlinSupport = VERSION_2_0_0_M6.compareTo(bootVersion) <= 0;
+		// Kotlin supported as of 2.0
+		final boolean kotlinSupport = VERSION_2_0_0.compareTo(bootVersion) <= 0;
 		model.put("kotlinSupport", kotlinSupport);
 
 		if (isMavenBuild(request)) {
 			model.put("mavenBuild", true);
-			ParentPom parentPom = metadata.getConfiguration().getEnv().getMaven()
-					.resolveParentPom(request.getBootVersion());
+			Maven maven = metadata.getConfiguration().getEnv().getMaven();
+			ParentPom parentPom = maven.resolveParentPom(request.getBootVersion());
 			if (parentPom.isIncludeSpringBootBom()
 					&& !request.getBoms().containsKey("spring-boot")) {
 				request.getBoms().put("spring-boot", metadata.createSpringBootBom(
 						request.getBootVersion(), "spring-boot.version"));
 			}
-
+			if (!maven.isSpringBootStarterParent(parentPom)) {
+				request.getBuildProperties().getMaven()
+						.put("project.build.sourceEncoding", () -> "UTF-8");
+				request.getBuildProperties().getMaven()
+						.put("project.reporting.outputEncoding", () -> "UTF-8");
+			}
 			model.put("mavenParentGroupId", parentPom.getGroupId());
 			model.put("mavenParentArtifactId", parentPom.getArtifactId());
 			model.put("mavenParentVersion", parentPom.getVersion());
 			model.put("includeSpringBootBom", parentPom.isIncludeSpringBootBom());
+			model.put("defaultPackaging", "jar".equals(request.getPackaging()));
 		}
 
 		model.put("repositoryValues", request.getRepositories().entrySet());
@@ -479,6 +476,8 @@ public class ProjectGenerator {
 				filterDependencies(dependencies, Dependency.SCOPE_RUNTIME));
 		model.put("compileOnlyDependencies",
 				filterDependencies(dependencies, Dependency.SCOPE_COMPILE_ONLY));
+		model.put("annotationProcessorDependencies",
+				filterDependencies(dependencies, Dependency.SCOPE_ANNOTATION_PROCESSOR));
 		model.put("providedDependencies",
 				filterDependencies(dependencies, Dependency.SCOPE_PROVIDED));
 		model.put("testDependencies",
@@ -495,6 +494,9 @@ public class ProjectGenerator {
 		model.put("buildPropertiesVersions", versions.entrySet());
 		request.getBuildProperties().getVersions().forEach(
 				(k, v) -> versions.put(computeVersionProperty(request, k), v.get()));
+		if (!versions.isEmpty()) {
+			model.put("hasBuildPropertiesVersions", true);
+		}
 		Map<String, String> gradle = new LinkedHashMap<>();
 		model.put("buildPropertiesGradle", gradle.entrySet());
 		request.getBuildProperties().getGradle()
@@ -506,9 +508,9 @@ public class ProjectGenerator {
 		// Add various versions
 		model.put("dependencyManagementPluginVersion", metadata.getConfiguration()
 				.getEnv().getGradle().getDependencyManagementPluginVersion());
-		model.put("kotlinVersion", metadata.getConfiguration().getEnv().getKotlin()
-				.resolveKotlinVersion(bootVersion));
 		if ("kotlin".equals(request.getLanguage())) {
+			model.put("kotlinVersion", metadata.getConfiguration().getEnv().getKotlin()
+					.resolveKotlinVersion(bootVersion));
 			model.put("kotlin", true);
 		}
 		if ("groovy".equals(request.getLanguage())) {
@@ -518,27 +520,21 @@ public class ProjectGenerator {
 		model.put("isRelease", request.getBootVersion().contains("RELEASE"));
 		setupApplicationModel(request, model);
 
-		// Gradle plugin has changed as from 1.3.0
-		model.put("bootOneThreeAvailable", VERSION_1_3_0_M1.compareTo(bootVersion) <= 0);
-
-		model.put("bootTwoZeroAvailable", VERSION_2_0_0_M1.compareTo(bootVersion) <= 0);
-
-		// Gradle plugin has changed again as from 1.4.2
-		model.put("springBootPluginName", (VERSION_1_4_2_M1.compareTo(bootVersion) <= 0
-				? "org.springframework.boot" : "spring-boot"));
-
-		// New testing stuff
-		model.put("newTestInfrastructure", isNewTestInfrastructureAvailable(request));
+		final boolean bootTwoZeroAvailable = VERSION_2_0_0.compareTo(bootVersion) <= 0;
+		model.put("bootTwoZeroAvailable", bootTwoZeroAvailable);
 
 		// Servlet Initializer
 		model.put("servletInitializrImport", new Imports(request.getLanguage())
 				.add(getServletInitializrClass(request)).toString());
 
 		// Kotlin-specific dep
-		model.put("kotlinStdlibArtifactId", getKotlinStdlibArtifactId(request));
+		model.put("kotlinStdlibArtifactId", "kotlin-stdlib-jdk8");
 
 		// Java versions
 		model.put("java8OrLater", isJava8OrLater(request));
+
+		// Facets
+		request.getFacets().forEach((facet) -> model.put("facets." + facet, true));
 
 		// Append the project request to the model
 		BeanWrapperImpl bean = new BeanWrapperImpl(request);
@@ -566,15 +562,15 @@ public class ProjectGenerator {
 		model.put("groupId", bom.getGroupId());
 		model.put("artifactId", bom.getArtifactId());
 		model.put("versionToken",
-				(bom.getVersionProperty() != null ? "${"
+				(bom.getVersionProperty() != null) ? "${"
 						+ computeVersionProperty(request, bom.getVersionProperty()) + "}"
-						: bom.getVersion()));
+						: bom.getVersion());
 		return model;
 	}
 
 	private String computeVersionProperty(ProjectRequest request,
 			VersionProperty property) {
-		if (isGradleBuild(request)) {
+		if (isGradleBuild(request) && property.isInternal()) {
 			return property.toCamelCaseFormat();
 		}
 		return property.toStandardFormat();
@@ -584,19 +580,8 @@ public class ProjectGenerator {
 			Map<String, Object> model) {
 		Imports imports = new Imports(request.getLanguage());
 		Annotations annotations = new Annotations();
-		boolean useSpringBootApplication = VERSION_1_2_0_RC1
-				.compareTo(Version.safeParse(request.getBootVersion())) <= 0;
-		if (useSpringBootApplication) {
-			imports.add("org.springframework.boot.autoconfigure.SpringBootApplication");
-			annotations.add("@SpringBootApplication");
-		}
-		else {
-			imports.add("org.springframework.boot.autoconfigure.EnableAutoConfiguration")
-					.add("org.springframework.context.annotation.ComponentScan")
-					.add("org.springframework.context.annotation.Configuration");
-			annotations.add("@EnableAutoConfiguration").add("@ComponentScan")
-					.add("@Configuration");
-		}
+		imports.add("org.springframework.boot.autoconfigure.SpringBootApplication");
+		annotations.add("@SpringBootApplication");
 		model.put("applicationImports", imports.toString());
 		model.put("applicationAnnotations", annotations.toString());
 
@@ -605,19 +590,8 @@ public class ProjectGenerator {
 	protected void setupTestModel(ProjectRequest request, Map<String, Object> model) {
 		Imports imports = new Imports(request.getLanguage());
 		Annotations testAnnotations = new Annotations();
-		boolean newTestInfrastructure = isNewTestInfrastructureAvailable(request);
-		if (newTestInfrastructure) {
-			imports.add("org.springframework.boot.test.context.SpringBootTest")
-					.add("org.springframework.test.context.junit4.SpringRunner");
-		}
-		else {
-			imports.add("org.springframework.boot.test.SpringApplicationConfiguration")
-					.add("org.springframework.test.context.junit4.SpringJUnit4ClassRunner");
-		}
-		if (request.hasWebFacet() && !newTestInfrastructure) {
-			imports.add("org.springframework.test.context.web.WebAppConfiguration");
-			testAnnotations.add("@WebAppConfiguration");
-		}
+		imports.add("org.springframework.boot.test.context.SpringBootTest")
+				.add("org.springframework.test.context.junit4.SpringRunner");
 		model.put("testImports", imports.withFinalCarriageReturn().toString());
 		model.put("testAnnotations",
 				testAnnotations.withFinalCarriageReturn().toString());
@@ -625,26 +599,10 @@ public class ProjectGenerator {
 
 	protected String getServletInitializrClass(ProjectRequest request) {
 		Version bootVersion = Version.safeParse(request.getBootVersion());
-		if (VERSION_1_4_0_M3.compareTo(bootVersion) > 0) {
-			return "org.springframework.boot.context.web.SpringBootServletInitializer";
-		}
-		else if (VERSION_2_0_0_M1.compareTo(bootVersion) > 0) {
+		if (VERSION_2_0_0.compareTo(bootVersion) > 0) {
 			return "org.springframework.boot.web.support.SpringBootServletInitializer";
 		}
-		else {
-			return "org.springframework.boot.web.servlet.support.SpringBootServletInitializer";
-		}
-	}
-
-	protected String getKotlinStdlibArtifactId(ProjectRequest request) {
-		String javaVersion = request.getJavaVersion();
-		if ("1.6".equals(javaVersion)) {
-			return "kotlin-stdlib";
-		}
-		else if ("1.7".equals(javaVersion)) {
-			return "kotlin-stdlib-jdk7";
-		}
-		return "kotlin-stdlib-jdk8";
+		return "org.springframework.boot.web.servlet.support.SpringBootServletInitializer";
 	}
 
 	private static boolean isJava8OrLater(ProjectRequest request) {
@@ -664,17 +622,8 @@ public class ProjectGenerator {
 		return "war".equals(request.getPackaging());
 	}
 
-	private static boolean isNewTestInfrastructureAvailable(ProjectRequest request) {
-		return VERSION_1_4_0_M2
-				.compareTo(Version.safeParse(request.getBootVersion())) <= 0;
-	}
-
-	private static boolean isGradle3Available(Version bootVersion) {
-		return VERSION_1_5_0_M1.compareTo(bootVersion) <= 0;
-	}
-
 	private static boolean isGradle4Available(Version bootVersion) {
-		return VERSION_2_0_0_M3.compareTo(bootVersion) < 0;
+		return VERSION_2_0_0.compareTo(bootVersion) <= 0;
 	}
 
 	private byte[] doGenerateMavenPom(Map<String, Object> model) {
@@ -690,8 +639,7 @@ public class ProjectGenerator {
 	}
 
 	private void writeGradleWrapper(File dir, Version bootVersion) {
-		String gradlePrefix = isGradle4Available(bootVersion) ? "gradle4"
-				: isGradle3Available(bootVersion) ? "gradle3" : "gradle";
+		String gradlePrefix = (isGradle4Available(bootVersion)) ? "gradle4" : "gradle3";
 		writeTextResource(dir, "gradlew.bat", gradlePrefix + "/gradlew.bat");
 		writeTextResource(dir, "gradlew", gradlePrefix + "/gradlew");
 
@@ -737,14 +685,25 @@ public class ProjectGenerator {
 		return target;
 	}
 
-	private File initializerProjectDir(File rootDir, ProjectRequest request) {
+//	private File initializerProjectDir(File rootDir, ProjectRequest request) {
+//		if (request.getBaseDir() != null) {
+//			File dir = new File(rootDir, request.getBaseDir());
+//			dir.mkdirs();
+//			return dir;
+//		}
+//		else {
+//			return rootDir;
+//		}
+//	}
+	private File initializerProjectDir(ProjectRequest request) {
+		Path project = Paths.get(request.getArtifactId(), request.getVersion());
 		if (request.getBaseDir() != null) {
-			File dir = new File(rootDir, request.getBaseDir());
+			File dir = new File(request.getBaseDir(), project.toString());
 			dir.mkdirs();
 			return dir;
 		}
 		else {
-			return rootDir;
+			return project.toFile();
 		}
 	}
 
@@ -757,8 +716,8 @@ public class ProjectGenerator {
 		try (OutputStream stream = new FileOutputStream(target)) {
 			StreamUtils.copy(body, Charset.forName("UTF-8"), stream);
 		}
-		catch (Exception e) {
-			throw new IllegalStateException("Cannot write file " + target, e);
+		catch (Exception ex) {
+			throw new IllegalStateException("Cannot write file " + target, ex);
 		}
 	}
 
@@ -766,8 +725,8 @@ public class ProjectGenerator {
 		try (OutputStream stream = new FileOutputStream(target)) {
 			StreamUtils.copy(body, stream);
 		}
-		catch (Exception e) {
-			throw new IllegalStateException("Cannot write file " + target, e);
+		catch (Exception ex) {
+			throw new IllegalStateException("Cannot write file " + target, ex);
 		}
 	}
 
@@ -832,8 +791,8 @@ public class ProjectGenerator {
 		}
 
 		private String generateImport(String type, String language) {
-			String end = ("groovy".equals(language) || "kotlin".equals(language)) ? ""
-					: ";";
+			String end = (("groovy".equals(language) || "kotlin".equals(language)) ? ""
+					: ";");
 			return "import " + type + end;
 		}
 

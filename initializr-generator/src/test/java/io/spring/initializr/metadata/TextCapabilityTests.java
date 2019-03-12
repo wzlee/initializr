@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 
 package io.spring.initializr.metadata;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Stephane Nicoll
  */
-public class TextCapabilityTests {
+class TextCapabilityTests {
 
 	@Test
-	public void mergeValue() {
+	void mergeValue() {
 		TextCapability capability = new TextCapability("foo");
 		capability.setContent("1234");
 		TextCapability another = new TextCapability("foo");
@@ -38,7 +38,7 @@ public class TextCapabilityTests {
 	}
 
 	@Test
-	public void mergeTitle() {
+	void mergeTitle() {
 		TextCapability capability = new TextCapability("foo", "Foo", "my desc");
 		capability.merge(new TextCapability("foo", "AnotherFoo", ""));
 		assertThat(capability.getId()).isEqualTo("foo");
@@ -48,7 +48,7 @@ public class TextCapabilityTests {
 	}
 
 	@Test
-	public void mergeDescription() {
+	void mergeDescription() {
 		TextCapability capability = new TextCapability("foo", "Foo", "my desc");
 		capability.merge(new TextCapability("foo", "", "another desc"));
 		assertThat(capability.getId()).isEqualTo("foo");

@@ -20,8 +20,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.spring.initializr.InitializrException;
 import io.spring.initializr.metadata.BillOfMaterials;
 import io.spring.initializr.metadata.DefaultMetadataElement;
 import io.spring.initializr.metadata.Dependency;
@@ -29,7 +31,6 @@ import io.spring.initializr.metadata.InitializrMetadata;
 import io.spring.initializr.metadata.Repository;
 import io.spring.initializr.metadata.Type;
 import io.spring.initializr.util.Version;
-import io.spring.initializr.util.VersionProperty;
 
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.util.StringUtils;
@@ -133,16 +134,18 @@ public class ProjectRequest extends BasicProjectRequest {
 	 * @param metadata the initializr metadata
 	 */
 	public void resolve(InitializrMetadata metadata) {
-		List<String> depIds = !getStyle().isEmpty() ? getStyle() : getDependencies();
-		String actualBootVersion = getBootVersion() != null ? getBootVersion()
+		List<String> depIds = (!getStyle().isEmpty() ? getStyle() : getDependencies());
+		String actualBootVersion = (getBootVersion() != null) ? getBootVersion()
 				: metadata.getBootVersions().getDefault().getId();
 		Version requestedVersion = Version.parse(actualBootVersion);
 		this.resolvedDependencies = depIds.stream().map((it) -> {
-			Dependency dependency = metadata.getDependencies().get(it);
-			if (dependency == null) {
-				throw new InvalidProjectRequestException(
-						"Unknown dependency '" + it + "' check project metadata");
-			}
+			// 直接通过moduleId转换成dependency
+			Dependency dependency = parseDependency(it);
+//			Dependency dependency = metadata.getDependencies().get(it);
+//			if (dependency == null) {
+//				throw new InvalidProjectRequestException(
+//						"Unknown dependency '" + it + "' check project metadata");
+//			}
 			return dependency.resolve(requestedVersion);
 		}).collect(Collectors.toList());
 		this.resolvedDependencies.forEach((it) -> {
@@ -228,26 +231,19 @@ public class ProjectRequest extends BasicProjectRequest {
 
 	protected void initializeProperties(InitializrMetadata metadata,
 			Version requestedVersion) {
-		String kotlinVersion = metadata.getConfiguration().getEnv().getKotlin()
-				.resolveKotlinVersion(requestedVersion);
+		Supplier<String> kotlinVersion = () -> metadata.getConfiguration().getEnv()
+				.getKotlin().resolveKotlinVersion(requestedVersion);
 		if ("gradle".equals(this.build)) {
 			this.buildProperties.getGradle().put("springBootVersion",
 					this::getBootVersion);
 			if ("kotlin".equals(getLanguage())) {
-				this.buildProperties.getGradle().put("kotlinVersion",
-						() -> kotlinVersion);
+				this.buildProperties.getGradle().put("kotlinVersion", kotlinVersion);
 			}
 		}
 		else {
-			this.buildProperties.getMaven().put("project.build.sourceEncoding",
-					() -> "UTF-8");
-			this.buildProperties.getMaven().put("project.reporting.outputEncoding",
-					() -> "UTF-8");
-			this.buildProperties.getVersions().put(new VersionProperty("java.version"),
-					this::getJavaVersion);
+			this.buildProperties.getMaven().put("java.version", this::getJavaVersion);
 			if ("kotlin".equals(getLanguage())) {
-				this.buildProperties.getVersions()
-						.put(new VersionProperty("kotlin.version"), () -> kotlinVersion);
+				this.buildProperties.getMaven().put("kotlin.version", kotlinVersion);
 			}
 		}
 	}
@@ -272,7 +268,7 @@ public class ProjectRequest extends BasicProjectRequest {
 		if ("war".equals(getPackaging())) {
 			if (!hasWebFacet()) {
 				// Need to be able to bootstrap the web app
-				this.resolvedDependencies.add(metadata.getDependencies().get("web"));
+				this.resolvedDependencies.add(determineWebDependency(metadata));
 				this.facets.add("web");
 			}
 			// Add the tomcat starter in provided scope
@@ -284,6 +280,14 @@ public class ProjectRequest extends BasicProjectRequest {
 			// There"s no starter so we add the default one
 			addDefaultDependency();
 		}
+	}
+
+	private Dependency determineWebDependency(InitializrMetadata metadata) {
+		Dependency web = metadata.getDependencies().get("web");
+		if (web != null) {
+			return web;
+		}
+		return Dependency.withId("web").asSpringBootStarter("web");
 	}
 
 	/**
@@ -313,15 +317,36 @@ public class ProjectRequest extends BasicProjectRequest {
 		return this.facets.contains(facet);
 	}
 
+	public Dependency parseDependency(String id) {
+		String groupId;
+		String artifactId;
+		String version;
+		String scope;
+		try {
+			String[] strings = id.split(":");
+			groupId = strings[0];
+			artifactId = strings[1];
+			version = strings[3];
+			if(strings.length == 5) {
+				scope = strings[4];
+				return Dependency.withId(id, groupId, artifactId, version,scope);
+			}else {
+				return Dependency.withId(id, groupId, artifactId, version);
+			}
+		}
+		catch (Exception ex) {
+			throw new InitializrException("parse dependency from id exception:", ex);
+		}
+	}
 	@Override
 	public String toString() {
 		return "ProjectRequest [" + "parameters=" + this.parameters + ", "
-				+ (this.resolvedDependencies != null
+				+ ((this.resolvedDependencies != null)
 						? "resolvedDependencies=" + this.resolvedDependencies + ", " : "")
 				+ "boms=" + this.boms + ", " + "repositories=" + this.repositories + ", "
 				+ "buildProperties=" + this.buildProperties + ", "
-				+ (this.facets != null ? "facets=" + this.facets + ", " : "")
-				+ (this.build != null ? "build=" + this.build : "") + "]";
+				+ ((this.facets != null) ? "facets=" + this.facets + ", " : "")
+				+ ((this.build != null) ? "build=" + this.build : "") + "]";
 	}
 
 }

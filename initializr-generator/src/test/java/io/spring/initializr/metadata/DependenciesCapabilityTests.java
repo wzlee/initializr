@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,20 @@
 
 package io.spring.initializr.metadata;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link DependenciesCapability}.
  *
  * @author Stephane Nicoll
  */
-public class DependenciesCapabilityTests {
-
-	@Rule
-	public final ExpectedException thrown = ExpectedException.none();
+class DependenciesCapabilityTests {
 
 	@Test
-	public void indexedDependencies() {
+	void indexedDependencies() {
 		Dependency dependency = Dependency.withId("first");
 		Dependency dependency2 = Dependency.withId("second");
 		DependenciesCapability capability = createDependenciesCapability("foo",
@@ -46,33 +42,30 @@ public class DependenciesCapabilityTests {
 	}
 
 	@Test
-	public void addTwoDependenciesWithSameId() {
+	void addTwoDependenciesWithSameId() {
 		Dependency dependency = Dependency.withId("conflict");
 		Dependency dependency2 = Dependency.withId("conflict");
 		DependenciesCapability capability = createDependenciesCapability("foo",
 				dependency, dependency2);
-
-		this.thrown.expect(IllegalArgumentException.class);
-		this.thrown.expectMessage("conflict");
-		capability.validate();
+		assertThatIllegalArgumentException().isThrownBy(capability::validate)
+				.withMessageContaining("conflict");
 	}
 
 	@Test
-	public void addDependencyWithAliases() {
+	void addDependencyWithAliases() {
 		Dependency dependency = Dependency.withId("first");
 		dependency.getAliases().add("alias1");
 		dependency.getAliases().add("alias2");
 		DependenciesCapability capability = createDependenciesCapability("foo",
 				dependency);
 		capability.validate();
-
 		assertThat(capability.get("first")).isSameAs(dependency);
 		assertThat(capability.get("alias1")).isSameAs(dependency);
 		assertThat(capability.get("alias2")).isSameAs(dependency);
 	}
 
 	@Test
-	public void aliasClashWithAnotherDependency() {
+	void aliasClashWithAnotherDependency() {
 		Dependency dependency = Dependency.withId("first");
 		dependency.getAliases().add("alias1");
 		dependency.getAliases().add("alias2");
@@ -81,14 +74,12 @@ public class DependenciesCapabilityTests {
 		DependenciesCapability capability = new DependenciesCapability();
 		capability.getContent().add(createDependencyGroup("foo", dependency));
 		capability.getContent().add(createDependencyGroup("bar", dependency2));
-
-		this.thrown.expect(IllegalArgumentException.class);
-		this.thrown.expectMessage("alias2");
-		capability.validate();
+		assertThatIllegalArgumentException().isThrownBy(capability::validate)
+				.withMessageContaining("alias2");
 	}
 
 	@Test
-	public void mergeAddEntry() {
+	void mergeAddEntry() {
 		DependenciesCapability capability = createDependenciesCapability("foo",
 				Dependency.withId("first"), Dependency.withId("second"));
 
@@ -105,7 +96,7 @@ public class DependenciesCapabilityTests {
 	}
 
 	@Test
-	public void addDefaultVersionRange() {
+	void addDefaultVersionRange() {
 		Dependency first = Dependency.withId("first");
 		Dependency second = Dependency.withId("second");
 		second.setVersionRange("1.2.3.RELEASE");
@@ -121,7 +112,7 @@ public class DependenciesCapabilityTests {
 	}
 
 	@Test
-	public void addDefaultBom() {
+	void addDefaultBom() {
 		Dependency first = Dependency.withId("first");
 		Dependency second = Dependency.withId("second");
 		second.setBom("da-bom");
@@ -137,7 +128,7 @@ public class DependenciesCapabilityTests {
 	}
 
 	@Test
-	public void addDefaultRepository() {
+	void addDefaultRepository() {
 		Dependency first = Dependency.withId("first");
 		Dependency second = Dependency.withId("second");
 		second.setRepository("da-repo");

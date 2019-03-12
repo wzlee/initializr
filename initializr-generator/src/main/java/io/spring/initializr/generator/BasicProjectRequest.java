@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,9 @@ public class BasicProjectRequest {
 	private Boolean embeddedZookeeper;
 	private boolean endpoints;
 	private boolean qos;
+	private Integer port;
+	private String configUri;
+	private String authToken;
 
 	// The base directory to create in the archive - no baseDir by default
 	private String baseDir;
@@ -194,7 +197,7 @@ public class BasicProjectRequest {
 	}
 
 	public String getDubboServiceName() {
-		return dubboServiceName;
+		return this.dubboServiceName;
 	}
 
 	public void setDubboServiceName(String dubboServiceName) {
@@ -202,7 +205,7 @@ public class BasicProjectRequest {
 	}
 
 	public String getDubboServiceVersion() {
-		return dubboServiceVersion;
+		return this.dubboServiceVersion;
 	}
 
 	public void setDubboServiceVersion(String dubboServiceVersion) {
@@ -210,7 +213,7 @@ public class BasicProjectRequest {
 	}
 
 	public String getDubboSide() {
-		return dubboSide;
+		return this.dubboSide;
 	}
 
 	public void setDubboSide(String dubboSide) {
@@ -218,7 +221,7 @@ public class BasicProjectRequest {
 	}
 
 	public Boolean getEmbeddedZookeeper() {
-		return embeddedZookeeper;
+		return this.embeddedZookeeper;
 	}
 
 	public void setEmbeddedZookeeper(Boolean embeddedZookeeper) {
@@ -227,7 +230,7 @@ public class BasicProjectRequest {
 
 
 	public boolean isEndpoints() {
-		return endpoints;
+		return this.endpoints;
 	}
 
 	public void setEndpoints(boolean endpoints) {
@@ -235,11 +238,34 @@ public class BasicProjectRequest {
 	}
 
 	public boolean isQos() {
-		return qos;
+		return this.qos;
 	}
 
 	public void setQos(boolean qos) {
 		this.qos = qos;
 	}
 
+	public Integer getPort() {
+		return this.port;
+	}
+
+	public void setPort(Integer port) {
+		this.port = port;
+	}
+
+	public String getConfigUri() {
+		return this.configUri;
+	}
+
+	public void setConfigUri(String configUri) {
+		this.configUri = configUri;
+	}
+
+	public String getAuthToken() {
+		return this.authToken;
+	}
+
+	public void setAuthToken(String authToken) {
+		this.authToken = authToken;
+	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.spring.initializr.metadata.DefaultMetadataElement;
 import io.spring.initializr.metadata.InitializrMetadata;
 import io.spring.initializr.test.metadata.InitializrMetadataTestBuilder;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
@@ -41,7 +41,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 /**
  * @author Stephane Nicoll
  */
-public class DefaultInitializrMetadataProviderTests {
+class DefaultInitializrMetadataProviderTests {
 
 	private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -49,14 +49,14 @@ public class DefaultInitializrMetadataProviderTests {
 
 	private MockRestServiceServer mockServer;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		this.restTemplate = new RestTemplate();
 		this.mockServer = MockRestServiceServer.createServer(this.restTemplate);
 	}
 
 	@Test
-	public void bootVersionsAreReplaced() {
+	void bootVersionsAreReplaced() {
 		InitializrMetadata metadata = new InitializrMetadataTestBuilder()
 				.addBootVersion("0.0.9.RELEASE", true)
 				.addBootVersion("0.0.8.RELEASE", false).build();
@@ -79,7 +79,7 @@ public class DefaultInitializrMetadataProviderTests {
 	}
 
 	@Test
-	public void defaultBootVersionIsAlwaysSet() {
+	void defaultBootVersionIsAlwaysSet() {
 		InitializrMetadata metadata = new InitializrMetadataTestBuilder()
 				.addBootVersion("0.0.9.RELEASE", true)
 				.addBootVersion("0.0.8.RELEASE", false).build();

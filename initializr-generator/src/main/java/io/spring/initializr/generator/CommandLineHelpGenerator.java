@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,7 +172,8 @@ public class CommandLineHelpGenerator {
 				.collect(Collectors.toList())) {
 			String[] data = new String[3];
 			data[0] = dep.getId();
-			data[1] = dep.getDescription() != null ? dep.getDescription() : dep.getName();
+			data[1] = (dep.getDescription() != null) ? dep.getDescription()
+					: dep.getName();
 			data[2] = dep.getVersionRequirement();
 			dependencyTable[i++] = data;
 		}
@@ -194,7 +195,7 @@ public class CommandLineHelpGenerator {
 				.collect(Collectors.toList())) {
 			String[] data = new String[typeTable[0].length];
 			data[0] = (type.isDefault() ? type.getId() + " *" : type.getId());
-			data[1] = type.getDescription() != null ? type.getDescription()
+			data[1] = (type.getDescription() != null) ? type.getDescription()
 					: type.getName();
 			if (addTags) {
 				data[2] = buildTagRepresentation(type);

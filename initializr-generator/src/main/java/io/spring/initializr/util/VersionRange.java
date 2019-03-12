@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,30 +105,20 @@ public class VersionRange {
 		return this.higherInclusive;
 	}
 
-	@Override
-	public String toString() {
+	public String toRangeString() {
 		StringBuilder sb = new StringBuilder();
-		if (this.lowerVersion != null) {
-			sb.append(this.lowerInclusive ? ">=" : ">").append(this.lowerVersion);
+		if (this.lowerVersion == null && this.higherVersion == null) {
+			return "";
 		}
 		if (this.higherVersion != null) {
-			sb.append(" and ").append(this.higherInclusive ? "<=" : "<")
-					.append(this.higherVersion);
+			sb.append(this.lowerInclusive ? "[" : "(").append(this.lowerVersion)
+					.append(",").append(this.higherVersion)
+					.append(this.higherInclusive ? "]" : ")");
+		}
+		else {
+			sb.append(this.lowerVersion);
 		}
 		return sb.toString();
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (this.higherInclusive ? 1231 : 1237);
-		result = prime * result
-				+ ((this.higherVersion == null) ? 0 : this.higherVersion.hashCode());
-		result = prime * result + (this.lowerInclusive ? 1231 : 1237);
-		result = prime * result
-				+ ((this.lowerVersion == null) ? 0 : this.lowerVersion.hashCode());
-		return result;
 	}
 
 	@Override
@@ -166,6 +156,32 @@ public class VersionRange {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (this.higherInclusive ? 1231 : 1237);
+		result = prime * result
+				+ ((this.higherVersion == null) ? 0 : this.higherVersion.hashCode());
+		result = prime * result + (this.lowerInclusive ? 1231 : 1237);
+		result = prime * result
+				+ ((this.lowerVersion == null) ? 0 : this.lowerVersion.hashCode());
+		return result;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		if (this.lowerVersion != null) {
+			sb.append(this.lowerInclusive ? ">=" : ">").append(this.lowerVersion);
+		}
+		if (this.higherVersion != null) {
+			sb.append(" and ").append(this.higherInclusive ? "<=" : "<")
+					.append(this.higherVersion);
+		}
+		return sb.toString();
 	}
 
 }

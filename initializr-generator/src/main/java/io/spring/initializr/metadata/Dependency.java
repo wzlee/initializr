@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,11 @@ public class Dependency extends MetadataElement implements Describable {
 	public static final String SCOPE_COMPILE_ONLY = "compileOnly";
 
 	/**
+	 * Annotation Processor Scope.
+	 */
+	public static final String SCOPE_ANNOTATION_PROCESSOR = "annotationProcessor";
+
+	/**
 	 * Runtime Scope.
 	 */
 	public static final String SCOPE_RUNTIME = "runtime";
@@ -68,9 +73,9 @@ public class Dependency extends MetadataElement implements Describable {
 	/**
 	 * All scope types.
 	 */
-	public static final List<String> SCOPE_ALL = Collections
-			.unmodifiableList(Arrays.asList(SCOPE_COMPILE, SCOPE_RUNTIME,
-					SCOPE_COMPILE_ONLY, SCOPE_PROVIDED, SCOPE_TEST));
+	public static final List<String> SCOPE_ALL = Collections.unmodifiableList(
+			Arrays.asList(SCOPE_COMPILE, SCOPE_RUNTIME, SCOPE_COMPILE_ONLY,
+					SCOPE_ANNOTATION_PROCESSOR, SCOPE_PROVIDED, SCOPE_TEST));
 
 	private List<String> aliases = new ArrayList<>();
 
@@ -149,8 +154,8 @@ public class Dependency extends MetadataElement implements Describable {
 	}
 
 	public void setVersionRange(String versionRange) {
-		this.versionRange = StringUtils.hasText(versionRange) ? versionRange.trim()
-				: null;
+		this.versionRange = (StringUtils.hasText(versionRange) ? versionRange.trim()
+				: null);
 	}
 
 	/**
@@ -170,8 +175,8 @@ public class Dependency extends MetadataElement implements Describable {
 	 */
 	public Dependency asSpringBootStarter(String name) {
 		this.groupId = "org.springframework.boot";
-		this.artifactId = StringUtils.hasText(name) ? "spring-boot-starter-" + name
-				: "spring-boot-starter";
+		this.artifactId = (StringUtils.hasText(name) ? "spring-boot-starter-" + name
+				: "spring-boot-starter");
 		if (StringUtils.hasText(name)) {
 			setId(name);
 		}
@@ -216,6 +221,7 @@ public class Dependency extends MetadataElement implements Describable {
 		if (this.versionRange != null) {
 			try {
 				this.range = versionParser.parseRange(this.versionRange);
+				this.versionRange = this.range.toRangeString();
 				this.versionRequirement = this.range.toString();
 			}
 			catch (InvalidVersionException ex) {
@@ -247,11 +253,11 @@ public class Dependency extends MetadataElement implements Describable {
 		for (Mapping mapping : this.mappings) {
 			if (mapping.range.match(bootVersion)) {
 				Dependency dependency = new Dependency(this);
-				dependency.groupId = mapping.groupId != null ? mapping.groupId
+				dependency.groupId = (mapping.groupId != null) ? mapping.groupId
 						: this.groupId;
-				dependency.artifactId = mapping.artifactId != null ? mapping.artifactId
+				dependency.artifactId = (mapping.artifactId != null) ? mapping.artifactId
 						: this.artifactId;
-				dependency.version = mapping.version != null ? mapping.version
+				dependency.version = (mapping.version != null) ? mapping.version
 						: this.version;
 				dependency.versionRequirement = mapping.range.toString();
 				dependency.mappings = null;
@@ -321,7 +327,7 @@ public class Dependency extends MetadataElement implements Describable {
 	/**
 	 * Return the default version, can be {@code null} to indicate that the version is
 	 * managed by the project and does not need to be specified.
-	 * @return The default version or {@code null}
+	 * @return the default version or {@code null}
 	 */
 	public String getVersion() {
 		return this.version;
@@ -459,7 +465,7 @@ public class Dependency extends MetadataElement implements Describable {
 		dependency.groupId = groupId;
 		dependency.artifactId = artifactId;
 		dependency.version = version;
-		dependency.scope = (scope != null ? scope : SCOPE_COMPILE);
+		dependency.scope = (scope != null) ? scope : SCOPE_COMPILE;
 		return dependency;
 	}
 

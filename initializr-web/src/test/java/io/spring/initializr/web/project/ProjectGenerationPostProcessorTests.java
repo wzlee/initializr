@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import io.spring.initializr.generator.ProjectRequestPostProcessor;
 import io.spring.initializr.metadata.InitializrMetadata;
 import io.spring.initializr.web.AbstractInitializrControllerIntegrationTests;
 import io.spring.initializr.web.project.ProjectGenerationPostProcessorTests.ProjectRequestPostProcessorConfiguration;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,14 +31,14 @@ import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test-default")
 @Import(ProjectRequestPostProcessorConfiguration.class)
-public class ProjectGenerationPostProcessorTests
+class ProjectGenerationPostProcessorTests
 		extends AbstractInitializrControllerIntegrationTests {
 
 	@Test
-	public void postProcessorsInvoked() {
-		downloadZip("/starter.zip?bootVersion=1.2.4.RELEASE&javaVersion=1.6")
+	void postProcessorsInvoked() {
+		downloadZip("/starter.zip?bootVersion=2.0.4.RELEASE&javaVersion=1.8")
 				.isJavaProject().isMavenProject().pomAssert()
-				.hasSpringBootParent("1.2.3.RELEASE").hasProperty("java.version", "1.7");
+				.hasSpringBootParent("2.2.3.RELEASE").hasProperty("java.version", "1.7");
 	}
 
 	@Configuration
@@ -64,7 +64,7 @@ public class ProjectGenerationPostProcessorTests
 				public void postProcessBeforeResolution(ProjectRequest request,
 						InitializrMetadata metadata) {
 					request.setJavaVersion("1.2");
-					request.setBootVersion("1.2.3.RELEASE");
+					request.setBootVersion("2.2.3.RELEASE");
 				}
 			};
 		}

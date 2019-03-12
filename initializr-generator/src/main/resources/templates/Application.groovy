@@ -7,6 +7,8 @@ import org.springframework.boot.SpringApplication
 class {{applicationName}} {
 
 	static void main(String[] args) {
-		SpringApplication.run {{applicationName}}, args
+		SpringApplication.run({{applicationName}}, args)
 	}
+
 }
+

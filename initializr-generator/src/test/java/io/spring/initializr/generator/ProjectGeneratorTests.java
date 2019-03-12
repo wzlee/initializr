@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 the original author or authors.
+ * Copyright 2012-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,13 @@ import io.spring.initializr.metadata.InitializrMetadata;
 import io.spring.initializr.test.generator.ProjectAssert;
 import io.spring.initializr.test.metadata.InitializrMetadataTestBuilder;
 import io.spring.initializr.util.VersionProperty;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.fail;
 
 /**
@@ -43,27 +39,29 @@ import static org.assertj.core.api.Assertions.fail;
  * @author Stephane Nicoll
  * @author Andy Wilkinson
  */
-public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
+class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 
-	@Rule
-	public final ExpectedException thrown = ExpectedException.none();
+	@Override
+	protected InitializrMetadataTestBuilder initializeTestMetadataBuilder() {
+		return InitializrMetadataTestBuilder.withBasicDefaults();
+	}
 
 	@Test
-	public void defaultMavenPom() {
+	void defaultMavenPom() {
 		ProjectRequest request = createProjectRequest("web");
 		generateMavenPom(request).hasNoRepository().hasSpringBootStarterDependency("web");
 		verifyProjectSuccessfulEventFor(request);
 	}
 
 	@Test
-	public void defaultGradleBuild() {
+	void defaultGradleBuild() {
 		ProjectRequest request = createProjectRequest("web");
 		generateGradleBuild(request).doesNotContain("import");
 		verifyProjectSuccessfulEventFor(request);
 	}
 
 	@Test
-	public void defaultProject() {
+	void defaultProject() {
 		ProjectRequest request = createProjectRequest("web");
 		generateProject(request).isJavaProject().isMavenProject().pomAssert()
 				.hasNoRepository().hasSpringBootStarterDependency("web");
@@ -71,36 +69,36 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void defaultProjectWithGradle() {
+	void defaultProjectWithGradle() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setType("gradle-build");
 		ProjectAssert gradleProject = generateProject(request).isGradleProject();
-		gradleProject.gradleBuildAssert()
-				.contains("compile('org.springframework.boot:spring-boot-starter-web')")
+		gradleProject.gradleBuildAssert().contains(
+				"implementation 'org.springframework.boot:spring-boot-starter-web'")
 				.contains(
-						"testCompile('org.springframework.boot:spring-boot-starter-test')");
+						"testImplementation 'org.springframework.boot:spring-boot-starter-test'");
 		gradleProject.gradleSettingsAssert().hasProjectName("demo");
 		verifyProjectSuccessfulEventFor(request);
 	}
 
 	@Test
-	public void noDependencyAddsRootStarter() {
+	void noDependencyAddsRootStarter() {
 		ProjectRequest request = createProjectRequest();
 		generateProject(request).isJavaProject().isMavenProject().pomAssert()
 				.hasSpringBootStarterRootDependency();
 	}
 
 	@Test
-	public void mavenPomWithBootSnapshot() {
+	void mavenPomWithBootSnapshot() {
 		ProjectRequest request = createProjectRequest("web");
-		request.setBootVersion("1.0.1.BUILD-SNAPSHOT");
+		request.setBootVersion("2.1.1.BUILD-SNAPSHOT");
 		generateMavenPom(request).hasSnapshotRepository()
-				.hasSpringBootParent("1.0.1.BUILD-SNAPSHOT")
+				.hasSpringBootParent("2.1.1.BUILD-SNAPSHOT")
 				.hasSpringBootStarterDependency("web");
 	}
 
 	@Test
-	public void mavenPomWithTarDependency() {
+	void mavenPomWithTarDependency() {
 		Dependency dependency = Dependency.withId("custom-artifact", "org.foo",
 				"custom-artifact");
 		dependency.setType("tar.gz");
@@ -113,7 +111,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void gradleBuildWithTarDependency() {
+	void gradleBuildWithTarDependency() {
 		Dependency dependency = Dependency.withId("custom-artifact", "org.foo",
 				"custom-artifact");
 		dependency.setType("tar.gz");
@@ -123,11 +121,11 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 
 		ProjectRequest request = createProjectRequest("custom-artifact");
 		generateGradleBuild(request)
-				.contains("compile('org.foo:custom-artifact@tar.gz')");
+				.contains("implementation 'org.foo:custom-artifact@tar.gz'");
 	}
 
 	@Test
-	public void mavenPomWithWebFacet() {
+	void mavenPomWithWebFacet() {
 		Dependency dependency = Dependency.withId("thymeleaf", "org.foo", "thymeleaf");
 		dependency.getFacets().add("web");
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
@@ -141,7 +139,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void mavenWarWithWebFacet() {
+	void mavenWarWithWebFacet() {
 		Dependency dependency = Dependency.withId("thymeleaf", "org.foo", "thymeleaf");
 		dependency.getFacets().add("web");
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
@@ -159,7 +157,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void mavenWarPomWithoutWebFacet() {
+	void mavenWarPomWithoutWebFacet() {
 		ProjectRequest request = createProjectRequest("data-jpa");
 		request.setPackaging("war");
 		generateMavenPom(request).hasSpringBootStarterTomcat()
@@ -169,7 +167,36 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void gradleWarWithWebFacet() {
+	void mavenWarPomWithoutWebFacetAndWithoutWebDependency() {
+		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
+				.addDependencyGroup("core", "security", "data-jpa").build();
+		applyMetadata(metadata);
+
+		ProjectRequest request = createProjectRequest("data-jpa");
+		request.setPackaging("war");
+		generateMavenPom(request).hasSpringBootStarterTomcat()
+				.hasSpringBootStarterDependency("data-jpa")
+				.hasSpringBootStarterDependency("web") // Added by war packaging
+				.hasSpringBootStarterTest().hasDependenciesCount(4);
+	}
+
+	@Test
+	void mavenWarPomWithoutWebFacetAndWithCustomWebDependency() {
+		Dependency customWebStarter = Dependency.withId("web", "org.acme", "web-starter");
+		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
+				.addDependencyGroup("core", "security", "data-jpa")
+				.addDependencyGroup("acme", customWebStarter).build();
+		applyMetadata(metadata);
+		ProjectRequest request = createProjectRequest("data-jpa");
+		request.setPackaging("war");
+		generateMavenPom(request).hasSpringBootStarterTomcat()
+				.hasSpringBootStarterDependency("data-jpa")
+				.hasDependency(customWebStarter) // Added by war packaging
+				.hasSpringBootStarterTest().hasDependenciesCount(4);
+	}
+
+	@Test
+	void gradleWarWithWebFacet() {
 		Dependency dependency = Dependency.withId("thymeleaf", "org.foo", "thymeleaf");
 		dependency.getFacets().add("web");
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
@@ -182,33 +209,35 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 		request.setType("gradle-project");
 		generateProject(request).isJavaWarProject().isGradleProject().gradleBuildAssert()
 				// This is tagged as web facet so it brings the web one
-				.contains("apply plugin: 'war'").contains("compile('org.foo:thymeleaf')")
+				.contains("apply plugin: 'war'")
+				.contains("implementation 'org.foo:thymeleaf'")
 				.doesNotContain(
-						"compile('org.springframework.boot:spring-boot-starter-web')")
+						"implementation 'org.springframework.boot:spring-boot-starter-web'")
 				.contains(
-						"testCompile('org.springframework.boot:spring-boot-starter-test')")
-				.contains("configurations {") // declare providedRuntime config
+						"testImplementation 'org.springframework.boot:spring-boot-starter-test'")
+				.doesNotContain("configurations {") // no need to declare providedRuntime
 				.contains("providedRuntime").contains(
-						"providedRuntime('org.springframework.boot:spring-boot-starter-tomcat')");
+						"providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'");
 	}
 
 	@Test
-	public void gradleWarPomWithoutWebFacet() {
+	void gradleWarPomWithoutWebFacet() {
 		ProjectRequest request = createProjectRequest("data-jpa");
 		request.setPackaging("war");
 		generateGradleBuild(request).contains(
-				"compile('org.springframework.boot:spring-boot-starter-data-jpa')")
+				"implementation 'org.springframework.boot:spring-boot-starter-data-jpa'")
 				// Added by warpackaging
-				.contains("compile('org.springframework.boot:spring-boot-starter-web')")
 				.contains(
-						"testCompile('org.springframework.boot:spring-boot-starter-test')")
-				.contains("configurations {") // declare providedRuntime config
+						"implementation 'org.springframework.boot:spring-boot-starter-web'")
+				.contains(
+						"testImplementation 'org.springframework.boot:spring-boot-starter-test'")
+				.doesNotContain("configurations {") // no need to declare providedRuntime
 				.contains("providedRuntime").contains(
-						"providedRuntime('org.springframework.boot:spring-boot-starter-tomcat')");
+						"providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'");
 	}
 
 	@Test
-	public void groupIdAndArtifactIdInferPackageName() {
+	void groupIdAndArtifactIdInferPackageName() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setGroupId("org.acme");
 		request.setArtifactId("42foo");
@@ -216,7 +245,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void cleanPackageNameWithGroupIdAndArtifactIdWithVersion() {
+	void cleanPackageNameWithGroupIdAndArtifactIdWithVersion() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setGroupId("org.acme");
 		request.setArtifactId("foo-1.4.5");
@@ -224,7 +253,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void cleanPackageNameWithInvalidPackageName() {
+	void cleanPackageNameWithInvalidPackageName() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setGroupId("org.acme");
 		request.setArtifactId("foo");
@@ -239,7 +268,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void gradleProjectWithCustomArtifactId() {
+	void gradleProjectWithCustomArtifactId() {
 		ProjectRequest request = createProjectRequest();
 		request.setType("gradle-build");
 		request.setArtifactId("my-application");
@@ -249,108 +278,45 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void springBoot11UseEnableAutoConfigurationJava() {
+	void springBootUseSpringBootApplicationJava() {
 		ProjectRequest request = createProjectRequest("web");
-		request.setBootVersion("1.1.9.RELEASE");
-		request.setName("MyDemo");
-		request.setPackageName("foo");
-		generateProject(request)
-				.sourceCodeAssert("src/main/java/foo/MyDemoApplication.java")
-				.hasImports(EnableAutoConfiguration.class.getName(),
-						ComponentScan.class.getName(), Configuration.class.getName())
-				.doesNotHaveImports(SpringBootApplication.class.getName())
-				.contains("@EnableAutoConfiguration", "@Configuration", "@ComponentScan")
-				.doesNotContain("@SpringBootApplication");
-	}
-
-	@Test
-	public void springBootUseSpringBootApplicationJava() {
-		ProjectRequest request = createProjectRequest("web");
-		request.setBootVersion("1.2.0.RC1");
 		request.setName("MyDemo");
 		request.setPackageName("foo");
 		generateProject(request)
 				.sourceCodeAssert("src/main/java/foo/MyDemoApplication.java")
 				.hasImports(SpringBootApplication.class.getName())
-				.doesNotHaveImports(EnableAutoConfiguration.class.getName(),
-						ComponentScan.class.getName(), Configuration.class.getName())
-				.contains("@SpringBootApplication").doesNotContain(
-						"@EnableAutoConfiguration", "@Configuration", "@ComponentScan");
+				.contains("@SpringBootApplication");
 	}
 
 	@Test
-	public void springBoot11UseEnableAutoConfigurationGroovy() {
+	void springBootUseSpringBootApplicationGroovy() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setLanguage("groovy");
-		request.setBootVersion("1.1.9.RELEASE");
-		request.setName("MyDemo");
-		request.setPackageName("foo");
-		generateProject(request)
-				.sourceCodeAssert("src/main/groovy/foo/MyDemoApplication.groovy")
-				.hasImports(EnableAutoConfiguration.class.getName(),
-						ComponentScan.class.getName(), Configuration.class.getName())
-				.doesNotHaveImports(SpringBootApplication.class.getName())
-				.contains("@EnableAutoConfiguration", "@Configuration", "@ComponentScan")
-				.doesNotContain("@SpringBootApplication");
-	}
-
-	@Test
-	public void springBootUseSpringBootApplicationGroovy() {
-		ProjectRequest request = createProjectRequest("web");
-		request.setLanguage("groovy");
-		request.setBootVersion("1.2.0.RC1");
 		request.setName("MyDemo");
 		request.setPackageName("foo");
 		generateProject(request)
 				.sourceCodeAssert("src/main/groovy/foo/MyDemoApplication.groovy")
 				.hasImports(SpringBootApplication.class.getName())
-				.doesNotHaveImports(EnableAutoConfiguration.class.getName(),
-						ComponentScan.class.getName(), Configuration.class.getName())
-				.contains("@SpringBootApplication").doesNotContain(
-						"@EnableAutoConfiguration", "@Configuration", "@ComponentScan");
+				.contains("@SpringBootApplication");
 	}
 
 	@Test
-	public void springBoot11UseEnableAutoConfigurationKotlin() {
+	void springBootUseSpringBootApplicationKotlin() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setLanguage("kotlin");
-		request.setBootVersion("1.1.9.RELEASE");
 		request.setName("MyDemo");
 		request.setPackageName("foo");
-		generateProject(request)
-				.sourceCodeAssert("src/main/kotlin/foo/MyDemoApplication.kt")
-				.hasImports(EnableAutoConfiguration.class.getName(),
-						ComponentScan.class.getName(), Configuration.class.getName())
-				.doesNotHaveImports(SpringBootApplication.class.getName())
-				.contains("@EnableAutoConfiguration", "@Configuration", "@ComponentScan")
-				.doesNotContain("@SpringBootApplication");
-	}
 
-	@Test
-	public void springBootUseSpringBootApplicationKotlin() {
-		ProjectRequest request = createProjectRequest("web");
-		request.setLanguage("kotlin");
-		request.setBootVersion("1.2.0.RC1");
-		request.setName("MyDemo");
-		request.setPackageName("foo");
+		applyMetadata(initializeTestMetadataBuilder().addDependencyGroup("core", "web")
+				.setKotlinEnv("1.0.0").build());
 		generateProject(request)
 				.sourceCodeAssert("src/main/kotlin/foo/MyDemoApplication.kt")
 				.hasImports(SpringBootApplication.class.getName())
-				.doesNotHaveImports(EnableAutoConfiguration.class.getName(),
-						ComponentScan.class.getName(), Configuration.class.getName())
-				.contains("@SpringBootApplication").doesNotContain(
-						"@EnableAutoConfiguration", "@Configuration", "@ComponentScan");
+				.contains("@SpringBootApplication");
 	}
 
 	@Test
-	public void springBootUseGradle2() {
-		ProjectRequest request = createProjectRequest("web");
-		request.setType("gradle-project");
-		generateProject(request).isGradleProject("2.13");
-	}
-
-	@Test
-	public void springBoot15UseGradle3() {
+	void springBoot15UseGradle3() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setType("gradle-project");
 		request.setBootVersion("1.5.0.RELEASE");
@@ -358,31 +324,15 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void springBoot20M3UseGradle3() {
+	void springBoot20UsesGradle4() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setType("gradle-project");
-		request.setBootVersion("2.0.0.M3");
-		generateProject(request).isGradleProject("3.5.1");
+		request.setBootVersion("2.0.0.RELEASE");
+		generateProject(request).isGradleProject("4.10.2");
 	}
 
 	@Test
-	public void springBoot20M4UsesGradle4() {
-		ProjectRequest request = createProjectRequest("web");
-		request.setType("gradle-project");
-		request.setBootVersion("2.0.0.M4");
-		generateProject(request).isGradleProject("4.5.1");
-	}
-
-	@Test
-	public void springBoot20SnapshotsUseGradle4() {
-		ProjectRequest request = createProjectRequest("web");
-		request.setType("gradle-project");
-		request.setBootVersion("2.0.0.BUILD-SNAPSHOT");
-		generateProject(request).isGradleProject("4.5.1");
-	}
-
-	@Test
-	public void customBaseDirectory() {
+	void customBaseDirectory() {
 		ProjectRequest request = createProjectRequest();
 		request.setBaseDir("my-project");
 		generateProject(request).hasBaseDir("my-project").isJavaProject()
@@ -390,7 +340,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void customBaseDirectoryNested() {
+	void customBaseDirectoryNested() {
 		ProjectRequest request = createProjectRequest();
 		request.setBaseDir("foo-bar/my-project");
 		generateProject(request).hasBaseDir("foo-bar/my-project").isJavaProject()
@@ -398,7 +348,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void groovyWithMavenUsesGroovyDir() {
+	void groovyWithMavenUsesGroovyDir() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setType("maven-project");
 		request.setLanguage("groovy");
@@ -406,7 +356,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void groovyWithGradleUsesGroovyDir() {
+	void groovyWithGradleUsesGroovyDir() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setType("gradle-project");
 		request.setLanguage("groovy");
@@ -414,7 +364,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void mavenPomWithCustomVersion() {
+	void mavenPomWithCustomVersion() {
 		Dependency whatever = Dependency.withId("whatever", "org.acme", "whatever",
 				"1.2.3");
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
@@ -428,60 +378,64 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void defaultMavenPomHasSpringBootParent() {
+	void defaultMavenPomHasSpringBootParent() {
 		ProjectRequest request = createProjectRequest("web");
-		generateMavenPom(request).hasSpringBootParent(request.getBootVersion());
+		generateMavenPom(request).hasSpringBootParent(request.getBootVersion())
+				.hasNoProperty("project.build.sourceEncoding")
+				.hasNoProperty("project.reporting.outputEncoding");
 	}
 
 	@Test
-	public void mavenPomWithCustomParentPom() {
+	void mavenPomWithCustomParentPom() {
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.addDependencyGroup("core", "web", "security", "data-jpa")
 				.setMavenParent("com.foo", "foo-parent", "1.0.0-SNAPSHOT", false).build();
 		applyMetadata(metadata);
 		ProjectRequest request = createProjectRequest("web");
 		generateMavenPom(request).hasParent("com.foo", "foo-parent", "1.0.0-SNAPSHOT")
-				.hasBomsCount(0);
+				.hasBomsCount(0).hasProperty("project.build.sourceEncoding", "UTF-8")
+				.hasProperty("project.reporting.outputEncoding", "UTF-8");
 	}
 
 	@Test
-	public void mavenPomWithCustomParentPomAndSpringBootBom() {
+	void mavenPomWithCustomParentPomAndSpringBootBom() {
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.addDependencyGroup("core", "web", "security", "data-jpa")
 				.setMavenParent("com.foo", "foo-parent", "1.0.0-SNAPSHOT", true).build();
 		applyMetadata(metadata);
 		ProjectRequest request = createProjectRequest("web");
-		request.setBootVersion("1.0.2.RELEASE");
+		request.setBootVersion("1.5.17.RELEASE");
 		generateMavenPom(request).hasParent("com.foo", "foo-parent", "1.0.0-SNAPSHOT")
-				.hasProperty("spring-boot.version", "1.0.2.RELEASE")
+				.hasProperty("spring-boot.version", "1.5.17.RELEASE")
 				.hasBom("org.springframework.boot", "spring-boot-dependencies",
 						"${spring-boot.version}")
-				.hasBomsCount(1);
+				.hasBomsCount(1).hasProperty("project.build.sourceEncoding", "UTF-8")
+				.hasProperty("project.reporting.outputEncoding", "UTF-8");
 	}
 
 	@Test
-	public void gradleBuildWithCustomParentPomAndSpringBootBom() {
+	void gradleBuildWithCustomParentPomAndSpringBootBom() {
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.addDependencyGroup("core", "web", "security", "data-jpa")
 				.setMavenParent("com.foo", "foo-parent", "1.0.0-SNAPSHOT", true).build();
 		applyMetadata(metadata);
 		ProjectRequest request = createProjectRequest("web");
-		request.setBootVersion("1.0.2.RELEASE");
+		request.setBootVersion("1.5.17.RELEASE");
 		generateGradleBuild(request)
-				.doesNotContain("ext['spring-boot.version'] = '1.0.2.RELEASE'")
+				.doesNotContain("ext['spring-boot.version'] = '1.5.17.RELEASE'")
 				.doesNotContain(
-						"mavenBom \"org.springframework.boot:spring-boot-dependencies:1.0.2.RELEASE\"");
+						"mavenBom \"org.springframework.boot:spring-boot-dependencies:1.5.17.RELEASE\"");
 	}
 
 	@Test
-	public void gradleBuildWithBootSnapshot() {
+	void gradleBuildWithBootSnapshot() {
 		ProjectRequest request = createProjectRequest("web");
-		request.setBootVersion("1.0.1.BUILD-SNAPSHOT");
+		request.setBootVersion("2.1.1.BUILD-SNAPSHOT");
 		generateGradleBuild(request).hasSnapshotRepository();
 	}
 
 	@Test
-	public void gradleBuildWithCustomVersion() {
+	void gradleBuildWithCustomVersion() {
 		Dependency whatever = Dependency.withId("whatever", "org.acme", "whatever",
 				"1.2.3");
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
@@ -489,15 +443,15 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 				.addDependencyGroup("foo", whatever).build();
 		applyMetadata(metadata);
 		ProjectRequest request = createProjectRequest("whatever", "data-jpa", "web");
-		generateGradleBuild(request)
-				.contains("compile('org.springframework.boot:spring-boot-starter-web')")
+		generateGradleBuild(request).contains(
+				"implementation 'org.springframework.boot:spring-boot-starter-web'")
 				.contains(
-						"compile('org.springframework.boot:spring-boot-starter-data-jpa')")
-				.contains("compile('org.acme:whatever:1.2.3')");
+						"implementation 'org.springframework.boot:spring-boot-starter-data-jpa'")
+				.contains("implementation 'org.acme:whatever:1.2.3'");
 	}
 
 	@Test
-	public void mavenPomWithCustomScope() {
+	void mavenPomWithCustomScope() {
 		Dependency h2 = Dependency.withId("h2", "org.h2", "h2");
 		h2.setScope("runtime");
 		Dependency hamcrest = Dependency.withId("hamcrest", "org.hamcrest", "hamcrest");
@@ -519,7 +473,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void gradleBuildWithCustomScope() {
+	void gradleBuildWithCustomScope() {
 		Dependency h2 = Dependency.withId("h2", "org.h2", "h2");
 		h2.setScope("runtime");
 		Dependency hamcrest = Dependency.withId("hamcrest", "org.hamcrest", "hamcrest");
@@ -535,71 +489,44 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 		applyMetadata(metadata);
 		ProjectRequest request = createProjectRequest("hamcrest", "h2", "servlet-api",
 				"data-jpa", "web");
-		generateGradleBuild(request)
-				.contains("compile('org.springframework.boot:spring-boot-starter-web')")
+		generateGradleBuild(request).contains(
+				"implementation 'org.springframework.boot:spring-boot-starter-web'")
 				.contains(
-						"compile('org.springframework.boot:spring-boot-starter-data-jpa')")
-				// declare providedRuntime config
-				.contains("runtime('org.h2:h2')").contains("configurations {")
+						"implementation 'org.springframework.boot:spring-boot-starter-data-jpa'")
+				// declare providedRuntime config for jar-based projects
+				.contains("runtimeOnly 'org.h2:h2'").contains("configurations {")
 				.contains("providedRuntime")
-				.contains("providedRuntime('javax.servlet:servlet-api')")
-				.contains("testCompile('org.hamcrest:hamcrest')");
+				.contains("providedRuntime 'javax.servlet:servlet-api'")
+				.contains("testImplementation 'org.hamcrest:hamcrest'");
 	}
 
 	@Test
-	public void gradleBuildBeforeWithSpringBoot13() {
-		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
-				.addDependencyGroup("core", "web", "jpa").setGradleEnv("0.5.9.RELEASE")
-				.build();
-		applyMetadata(metadata);
+	void gradleBuildWithSpringBoot15() {
 		ProjectRequest request = createProjectRequest("web");
-		request.setBootVersion("1.2.3.RELEASE");
-		generateGradleBuild(request).contains("springBootVersion = '1.2.3.RELEASE'")
+		request.setBootVersion("1.5.20.BUILD-SNAPSHOT");
+		generateGradleBuild(request).contains("apply plugin: 'org.springframework.boot'")
 				.contains(
-						"classpath('io.spring.gradle:dependency-management-plugin:0.5.9.RELEASE')")
-				.contains("apply plugin: 'spring-boot'")
-				.contains("apply plugin: 'io.spring.dependency-management'");
-	}
-
-	@Test
-	public void gradleBuildAsFromSpringBoot13() {
-		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
-				.addDependencyGroup("core", "web", "jpa").setGradleEnv("0.5.9.RELEASE")
-				.build();
-		applyMetadata(metadata);
-		ProjectRequest request = createProjectRequest("web");
-		request.setBootVersion("1.3.0.BUILD-SNAPSHOT");
-		generateGradleBuild(request)
-				.contains("springBootVersion = '1.3.0.BUILD-SNAPSHOT'")
-				.contains("apply plugin: 'spring-boot'")
-				.doesNotContain(
-						"classpath('io.spring.gradle:dependency-management-plugin:0.5.9.RELEASE')")
-				.doesNotContain("apply plugin: 'io.spring.dependency-management'");
-	}
-
-	@Test
-	public void gradleBuildAsFromSpringBoot142() {
-		ProjectRequest request = createProjectRequest("web");
-		request.setBootVersion("1.4.2.BUILD-SNAPSHOT");
-		generateGradleBuild(request)
-				.contains("springBootVersion = '1.4.2.BUILD-SNAPSHOT'")
-				.contains("apply plugin: 'org.springframework.boot'")
+						"implementation 'org.springframework.boot:spring-boot-starter-web'")
+				.contains(
+						"testImplementation 'org.springframework.boot:spring-boot-starter-test'")
 				.doesNotContain("apply plugin: 'spring-boot'");
 	}
 
 	@Test
-	public void gradleBuildAsFromSpringBoot20() {
+	void gradleBuildWithSpringBoot20() {
 		ProjectRequest request = createProjectRequest("web");
-		request.setBootVersion("2.0.0.BUILD-SNAPSHOT");
-		generateGradleBuild(request)
-				.contains("springBootVersion = '2.0.0.BUILD-SNAPSHOT'")
-				.contains("apply plugin: 'org.springframework.boot'")
+		request.setBootVersion("2.0.0.RELEASE");
+		generateGradleBuild(request).contains("apply plugin: 'org.springframework.boot'")
 				.doesNotContain("apply plugin: 'spring-boot'")
-				.contains("apply plugin: 'io.spring.dependency-management'");
+				.contains("apply plugin: 'io.spring.dependency-management'")
+				.contains(
+						"implementation 'org.springframework.boot:spring-boot-starter-web'")
+				.contains(
+						"testImplementation 'org.springframework.boot:spring-boot-starter-test'");
 	}
 
 	@Test
-	public void mavenBom() {
+	void mavenBom() {
 		Dependency foo = Dependency.withId("foo", "org.acme", "foo");
 		foo.setBom("foo-bom");
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
@@ -612,7 +539,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void mavenBomWithSeveralDependenciesOnSameBom() {
+	void mavenBomWithSeveralDependenciesOnSameBom() {
 		Dependency foo = Dependency.withId("foo", "org.acme", "foo");
 		foo.setBom("the-bom");
 		Dependency bar = Dependency.withId("bar", "org.acme", "bar");
@@ -627,39 +554,39 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void mavenBomWithVersionMapping() {
+	void mavenBomWithVersionMapping() {
 		Dependency foo = Dependency.withId("foo", "org.acme", "foo");
 		foo.setBom("the-bom");
 		BillOfMaterials bom = BillOfMaterials.create("org.acme", "foo-bom");
 		bom.getMappings()
-				.add(BillOfMaterials.Mapping.create("[1.2.0.RELEASE,1.3.0.M1)", "1.0.0"));
-		bom.getMappings().add(BillOfMaterials.Mapping.create("1.3.0.M1", "1.2.0"));
+				.add(BillOfMaterials.Mapping.create("[2.2.0.RELEASE,2.3.0.M1)", "1.0.0"));
+		bom.getMappings().add(BillOfMaterials.Mapping.create("2.3.0.M1", "1.2.0"));
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.addDependencyGroup("foo", foo).addBom("the-bom", bom).build();
 		applyMetadata(metadata);
 
 		// First version
 		ProjectRequest request = createProjectRequest("foo");
-		request.setBootVersion("1.2.5.RELEASE");
-		generateMavenPom(request).hasDependency(foo).hasSpringBootParent("1.2.5.RELEASE")
+		request.setBootVersion("2.2.5.RELEASE");
+		generateMavenPom(request).hasDependency(foo).hasSpringBootParent("2.2.5.RELEASE")
 				.hasBom("org.acme", "foo-bom", "1.0.0");
 
 		// Second version
 		ProjectRequest request2 = createProjectRequest("foo");
-		request2.setBootVersion("1.3.0.M1");
-		generateMavenPom(request2).hasDependency(foo).hasSpringBootParent("1.3.0.M1")
+		request2.setBootVersion("2.3.0.M1");
+		generateMavenPom(request2).hasDependency(foo).hasSpringBootParent("2.3.0.M1")
 				.hasBom("org.acme", "foo-bom", "1.2.0");
 	}
 
 	@Test
-	public void mavenBomWithVersionMappingAndExtraRepositories() {
+	void mavenBomWithVersionMappingAndExtraRepositories() {
 		Dependency foo = Dependency.withId("foo", "org.acme", "foo");
 		foo.setBom("the-bom");
 		BillOfMaterials bom = BillOfMaterials.create("org.acme", "foo-bom");
 		bom.getRepositories().add("foo-repo");
 		bom.getMappings()
-				.add(BillOfMaterials.Mapping.create("[1.2.0.RELEASE,1.3.0.M1)", "1.0.0"));
-		bom.getMappings().add(BillOfMaterials.Mapping.create("1.3.0.M1", "1.2.0",
+				.add(BillOfMaterials.Mapping.create("[2.2.0.RELEASE,2.3.0.M1)", "1.0.0"));
+		bom.getMappings().add(BillOfMaterials.Mapping.create("2.3.0.M1", "1.2.0",
 				"foo-repo", "bar-repo"));
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.addDependencyGroup("foo", foo).addBom("the-bom", bom)
@@ -670,8 +597,8 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 
 		// Second version
 		ProjectRequest request = createProjectRequest("foo");
-		request.setBootVersion("1.3.0.RELEASE");
-		generateMavenPom(request).hasDependency(foo).hasSpringBootParent("1.3.0.RELEASE")
+		request.setBootVersion("2.3.0.RELEASE");
+		generateMavenPom(request).hasDependency(foo).hasSpringBootParent("2.3.0.RELEASE")
 				.hasBom("org.acme", "foo-bom", "1.2.0")
 				.hasRepository("foo-repo", "repo", "http://example.com/foo", true)
 				.hasRepository("bar-repo", "repo", "http://example.com/bar", false)
@@ -679,7 +606,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void gradleBom() {
+	void gradleBom() {
 		Dependency foo = Dependency.withId("foo", "org.acme", "foo");
 		foo.setBom("foo-bom");
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
@@ -692,7 +619,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void mavenRepository() {
+	void mavenRepository() {
 		Dependency foo = Dependency.withId("foo", "org.acme", "foo");
 		foo.setRepository("foo-repo");
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
@@ -706,7 +633,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void mavenRepositoryWithSeveralDependenciesOnSameRepository() {
+	void mavenRepositoryWithSeveralDependenciesOnSameRepository() {
 		Dependency foo = Dependency.withId("foo", "org.acme", "foo");
 		foo.setRepository("the-repo");
 		Dependency bar = Dependency.withId("bar", "org.acme", "bar");
@@ -723,7 +650,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void gradleRepository() {
+	void gradleRepository() {
 		Dependency foo = Dependency.withId("foo", "org.acme", "foo");
 		foo.setRepository("foo-repo");
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
@@ -736,7 +663,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void projectWithOnlyStarterDependency() {
+	void projectWithOnlyStarterDependency() {
 		Dependency foo = Dependency.withId("foo", "org.foo", "custom-my-starter");
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.addDependencyGroup("foo", foo).build();
@@ -748,7 +675,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void projectWithOnlyNonStarterDependency() {
+	void projectWithOnlyNonStarterDependency() {
 		Dependency foo = Dependency.withId("foo", "org.foo", "foo");
 		foo.setStarter(false);
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
@@ -762,10 +689,10 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void buildPropertiesMaven() {
+	void buildPropertiesMaven() {
 		ProjectRequest request = createProjectRequest("web");
 		request.getBuildProperties().getMaven().put("name", () -> "test");
-		request.getBuildProperties().getVersions().put(new VersionProperty("foo.version"),
+		request.getBuildProperties().getVersions().put(VersionProperty.of("foo.version"),
 				() -> "1.2.3");
 		request.getBuildProperties().getGradle().put("ignore.property", () -> "yes");
 
@@ -774,30 +701,33 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void buildPropertiesGradle() {
+	void buildPropertiesGradle() {
 		ProjectRequest request = createProjectRequest("web");
 		request.getBuildProperties().getGradle().put("name", () -> "test");
-		request.getBuildProperties().getVersions().put(new VersionProperty("foo.version"),
-				() -> "1.2.3");
+		request.getBuildProperties().getVersions()
+				.put(VersionProperty.of("foo.version", false), () -> "1.2.3");
+		request.getBuildProperties().getVersions()
+				.put(VersionProperty.of("internal.version"), () -> "4.5.6");
 		request.getBuildProperties().getMaven().put("ignore.property", () -> "yes");
 
-		generateGradleBuild(request).contains("name = 'test'").contains("ext {")
-				.contains("fooVersion = '1.2.3'").doesNotContain("ignore.property");
+		generateGradleBuild(request).contains("name = 'test'")
+				.hasProperties("foo.version", "1.2.3", "internalVersion", "4.5.6")
+				.doesNotContain("ignore.property");
 	}
 
 	@Test
-	public void versionRangeWithPostProcessor() {
+	void versionRangeWithPostProcessor() {
 		Dependency foo = Dependency.withId("foo", "org.acme", "foo");
-		foo.getMappings().add(Dependency.Mapping.create("[1.2.0.RELEASE,1.3.0.M1)", null,
+		foo.getMappings().add(Dependency.Mapping.create("[2.2.0.RELEASE,2.3.0.M1)", null,
 				null, "1.0.0"));
-		foo.getMappings().add(Dependency.Mapping.create("1.3.0.M1", null, null, "1.2.0"));
+		foo.getMappings().add(Dependency.Mapping.create("2.3.0.M1", null, null, "1.2.0"));
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
 				.addDependencyGroup("foo", foo).build();
 		applyMetadata(metadata);
 
 		// First without processor, get the correct version
 		ProjectRequest request = createProjectRequest("foo");
-		request.setBootVersion("1.2.5.RELEASE");
+		request.setBootVersion("2.2.5.RELEASE");
 		generateMavenPom(request)
 				.hasDependency(Dependency.withId("foo", "org.acme", "foo", "1.0.0"));
 
@@ -807,7 +737,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 					@Override
 					public void postProcessBeforeResolution(ProjectRequest r,
 							InitializrMetadata m) {
-						r.setBootVersion("1.3.0.M2");
+						r.setBootVersion("2.3.0.M2");
 					}
 				})));
 		generateMavenPom(request)
@@ -815,7 +745,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void gitIgnoreMaven() {
+	void gitIgnoreMaven() {
 		ProjectRequest request = createProjectRequest();
 		request.setType("maven-project");
 		ProjectAssert project = generateProject(request);
@@ -824,7 +754,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void gitIgnoreGradle() {
+	void gitIgnoreGradle() {
 		ProjectRequest request = createProjectRequest();
 		request.setType("gradle-project");
 		ProjectAssert project = generateProject(request);
@@ -833,7 +763,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void dependencyOrderSpringBootTakesPrecedence() {
+	void dependencyOrderSpringBootTakesPrecedence() {
 		Dependency depOne = Dependency.withId("one", "org.acme", "first", "1.2.3");
 		Dependency depTwo = Dependency.withId("two", "com.example", "second", "1.2.3");
 		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
@@ -842,31 +772,32 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 		applyMetadata(metadata);
 		ProjectRequest request = createProjectRequest("one", "web", "two", "data-jpa");
 		assertThat(generateGradleBuild(request).getGradleBuild()).containsSubsequence(
-				"compile('org.springframework.boot:spring-boot-starter-data-jpa')",
-				"compile('org.springframework.boot:spring-boot-starter-web')",
-				"compile('com.example:second:1.2.3')", "compile('org.acme:first:1.2.3')");
+				"implementation 'org.springframework.boot:spring-boot-starter-data-jpa'",
+				"implementation 'org.springframework.boot:spring-boot-starter-web'",
+				"implementation 'com.example:second:1.2.3'",
+				"implementation 'org.acme:first:1.2.3'");
 	}
 
 	@Test
-	public void invalidProjectTypeMavenPom() {
+	void invalidProjectTypeMavenPom() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setType("gradle-build");
-		this.thrown.expect(InvalidProjectRequestException.class);
-		this.thrown.expectMessage("gradle-build");
-		this.projectGenerator.generateMavenPom(request);
+		assertThatExceptionOfType(InvalidProjectRequestException.class)
+				.isThrownBy(() -> this.projectGenerator.generateMavenPom(request))
+				.withMessageContaining("gradle-build");
 	}
 
 	@Test
-	public void invalidProjectTypeGradleBuild() {
+	void invalidProjectTypeGradleBuild() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setType("maven-build");
-		this.thrown.expect(InvalidProjectRequestException.class);
-		this.thrown.expectMessage("maven-build");
-		this.projectGenerator.generateGradleBuild(request);
+		assertThatExceptionOfType(InvalidProjectRequestException.class)
+				.isThrownBy(() -> this.projectGenerator.generateGradleBuild(request))
+				.withMessageContaining("maven-build");
 	}
 
 	@Test
-	public void invalidDependency() {
+	void invalidDependency() {
 		ProjectRequest request = createProjectRequest("foo-bar");
 		try {
 			generateMavenPom(request);
@@ -879,7 +810,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void invalidType() {
+	void invalidType() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setType("foo-bar");
 		try {
@@ -893,7 +824,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void invalidPackaging() {
+	void invalidPackaging() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setPackaging("foo-bar");
 		try {
@@ -907,7 +838,7 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 	}
 
 	@Test
-	public void invalidLanguage() {
+	void invalidLanguage() {
 		ProjectRequest request = createProjectRequest("web");
 		request.setLanguage("foo-bar");
 		try {
@@ -918,6 +849,83 @@ public class ProjectGeneratorTests extends AbstractProjectGeneratorTests {
 			assertThat(ex.getMessage()).contains("foo-bar");
 			verifyProjectFailedEventFor(request, ex);
 		}
+	}
+
+	@Test
+	void invalidSpringBootVersion() {
+		ProjectRequest request = createProjectRequest("web");
+		request.setType("maven-project");
+		request.setBootVersion("1.2.3.M4");
+		assertThatExceptionOfType(InvalidProjectRequestException.class)
+				.isThrownBy(() -> this.projectGenerator.generateMavenPom(request))
+				.withMessageContaining("1.2.3.M4");
+	}
+
+	@Test
+	void kotlinWithMavenUseJpaFacetHasJpaKotlinPlugin() {
+		applyJpaMetadata(true);
+		ProjectRequest request = createProjectRequest("data-jpa");
+		request.setType("maven-project");
+		request.setLanguage("kotlin");
+		generateMavenPom(request).contains("<plugin>jpa</plugin>")
+				.contains("kotlin-maven-noarg");
+	}
+
+	@Test
+	void kotlinWithMavenWithoutJpaFacetDoesNotHaveJpaKotlinPlugin() {
+		applyJpaMetadata(false);
+		ProjectRequest request = createProjectRequest("data-jpa");
+		request.setType("maven-project");
+		request.setLanguage("kotlin");
+		generateMavenPom(request).doesNotContain("<plugin>jpa</plugin>")
+				.doesNotContain("kotlin-maven-noarg");
+	}
+
+	@Test
+	void javaWithMavenUseJpaFacetDoesNotHaveJpaKotlinPlugin() {
+		applyJpaMetadata(true);
+		ProjectRequest request = createProjectRequest("data-jpa");
+		request.setType("maven-project");
+		request.setLanguage("java");
+		generateMavenPom(request).doesNotContain("<plugin>jpa</plugin>")
+				.doesNotContain("kotlin-maven-noarg");
+	}
+
+	@Test
+	void kotlinWithGradleUseJpaFacetHasJpaKotlinPlugin() {
+		applyJpaMetadata(true);
+		ProjectRequest request = createProjectRequest("data-jpa");
+		request.setType("gradle-project");
+		request.setLanguage("kotlin");
+		generateGradleBuild(request).contains("apply plugin: 'kotlin-jpa'");
+	}
+
+	@Test
+	void kotlinWithGradleWithoutJpaFacetDoesNotHaveJpaKotlinPlugin() {
+		applyJpaMetadata(false);
+		ProjectRequest request = createProjectRequest("data-jpa");
+		request.setType("gradle-project");
+		request.setLanguage("kotlin");
+		generateGradleBuild(request).doesNotContain("apply plugin: 'kotlin-jpa'");
+	}
+
+	@Test
+	void javaWithGradleUseJpaFacetDoesNotHaveJpaKotlinPlugin() {
+		applyJpaMetadata(true);
+		ProjectRequest request = createProjectRequest("data-jpa");
+		request.setType("gradle-project");
+		request.setLanguage("java");
+		generateGradleBuild(request).doesNotContain("apply plugin: 'kotlin-jpa'");
+	}
+
+	private void applyJpaMetadata(boolean enableJpaFacet) {
+		Dependency jpa = Dependency.withId("data-jpa");
+		if (enableJpaFacet) {
+			jpa.setFacets(Collections.singletonList("jpa"));
+		}
+		InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults()
+				.addDependencyGroup("data-jpa", jpa).build();
+		applyMetadata(metadata);
 	}
 
 }
