@@ -257,13 +257,11 @@ public class ProjectGenerator {
 //		File resources = new File(dir, "src/main/resources");
 //		resources.mkdirs();
 //		write(new File(resources, "application.properties"), "application.properties", model);
-		
 		File bin = new File(dir, "src/main/resources/bin");
 		bin.mkdirs();
 		write(new File(bin, "startup.sh"), "bin/startup.sh", model);
 		write(new File(bin, "shutdown.sh"), "bin/shutdown.sh", model);
 		write(new File(bin, "run.sh"), "bin/run.sh", model);
-		
 		File config = new File(dir, "src/main/resources/config");
 		config.mkdirs();
 		write(new File(config, "bootstrap.properties"), "bootstrap.properties", model);

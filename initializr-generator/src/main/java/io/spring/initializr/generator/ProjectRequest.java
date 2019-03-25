@@ -327,10 +327,11 @@ public class ProjectRequest extends BasicProjectRequest {
 			groupId = strings[0];
 			artifactId = strings[1];
 			version = strings[3];
-			if(strings.length == 5) {
+			if (strings.length == 5) {
 				scope = strings[4];
-				return Dependency.withId(id, groupId, artifactId, version,scope);
-			}else {
+				return Dependency.withId(id, groupId, artifactId, version, scope);
+			}
+			else {
 				return Dependency.withId(id, groupId, artifactId, version);
 			}
 		}
